@@ -565,10 +565,25 @@ function toast(msg, ms=4200){
 async function loadQuestions(){
   if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
   try {
-    const res  = await fetch(`${APPS_SCRIPT_URL}?action=getQuestions`);
-    const data = await res.json();
+    // 8-second timeout so loader never hangs forever
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 8000);
+    const res = await fetch(
+      `${APPS_SCRIPT_URL}?action=getQuestions`,
+      { signal: controller.signal, redirect: "follow" }
+    );
+    clearTimeout(timer);
+    const text = await res.text();
+    // Apps Script sometimes wraps in a redirect — strip any HTML wrapper
+    const jsonStart = text.indexOf('{');
+    const jsonEnd   = text.lastIndexOf('}');
+    if(jsonStart === -1) throw new Error("No JSON in response");
+    const data = JSON.parse(text.slice(jsonStart, jsonEnd+1));
     if(data.questions && data.questions.length) questionBank = data.questions;
-  } catch(e){ console.warn("Sheets unavailable, using fallback questions.", e); }
+  } catch(e){
+    console.warn("Sheets unavailable — using built-in fallback questions.", e);
+    // fallback already set as default value of questionBank
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -580,9 +595,15 @@ async function submitAll(){
   if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
     console.log("Demo submit:", { email, company, lang, answers }); return;
   }
+  // Apps Script doesn't support CORS preflight on POST, so we use no-cors.
+  // The request goes through fine; we just can't read the response body.
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 10000);
   await fetch(APPS_SCRIPT_URL, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method: "POST",
+    mode:   "no-cors",          // ← key fix: avoids CORS preflight error
+    headers:{"Content-Type":"text/plain"}, // text/plain skips preflight
+    signal: controller.signal,
     body: JSON.stringify({
       action:"submitAnswers",
       timestamp: new Date().toISOString(),
@@ -590,6 +611,7 @@ async function submitAll(){
       answers: questionBank.map((q,i)=>({ question: q[lang]||q.en, answer: answers[i]||"" }))
     })
   });
+  clearTimeout(timer);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -827,62 +849,87 @@ function confetti(){
 </script>
 
 <!--
-╔══════════════════════════════════════════════════════════════╗
-║        GOOGLE APPS SCRIPT  (paste in Apps Script editor)     ║
-╚══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════╗
+║   GOOGLE APPS SCRIPT — UPDATED VERSION (copy everything below)  ║
+╚══════════════════════════════════════════════════════════════════╝
 
+// ── STEP 1: Replace with your Spreadsheet ID ──────────────────────
 const SS_ID = "YOUR_SPREADSHEET_ID";
+
+// ── STEP 2: Deploy as Web App ─────────────────────────────────────
+//   Deploy > New Deployment > Web App
+//   Execute as: Me
+//   Who has access: Anyone
+//   Then paste the /exec URL into the HTML config at the top.
+
+// Adds CORS headers so the browser can read the response
+function addCorsHeaders(output) {
+  return output
+    .setHeader("Access-Control-Allow-Origin",  "*")
+    .setHeader("Access-Control-Allow-Methods", "GET, POST")
+    .setHeader("Access-Control-Allow-Headers", "Content-Type, text/plain");
+}
 
 function doGet(e) {
   if (e.parameter.action === "getQuestions") {
     const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
-    // Row 1 = headers: Question_EN | Question_IT | Question_ES | Question_DE
-    // Row 2+ = actual questions (add as many rows as you like)
-    const rows = sheet.getDataRange().getValues().slice(1); // skip header
+    const rows  = sheet.getDataRange().getValues().slice(1); // skip header row
     const questions = rows
-      .filter(r => r[0] || r[1] || r[2] || r[3]) // skip empty rows
+      .filter(r => r[0] || r[1] || r[2] || r[3])
       .map(r => ({ en: r[0]||"", it: r[1]||"", es: r[2]||"", de: r[3]||"" }));
-    return ContentService
-      .createTextOutput(JSON.stringify({ questions }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return addCorsHeaders(
+      ContentService.createTextOutput(JSON.stringify({ questions }))
+        .setMimeType(ContentService.MimeType.JSON)
+    );
   }
-  return ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return addCorsHeaders(
+    ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
+      .setMimeType(ContentService.MimeType.JSON)
+  );
 }
 
 function doPost(e) {
+  // We send Content-Type: text/plain to avoid CORS preflight — parse normally
   const body = JSON.parse(e.postData.contents);
   const ss   = SpreadsheetApp.openById(SS_ID);
-  let resp   = ss.getSheetByName("Responses");
+
+  let resp = ss.getSheetByName("Responses");
   if (!resp) {
     resp = ss.insertSheet("Responses");
     resp.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
   }
+
   if (body.action === "submitAnswers") {
     body.answers.forEach(a => {
-      resp.appendRow([body.timestamp, body.language,
-                      body.email, body.company,
-                      a.question, a.answer]);
+      resp.appendRow([
+        body.timestamp, body.language,
+        body.email,     body.company,
+        a.question,     a.answer
+      ]);
     });
   }
-  return ContentService
-    .createTextOutput(JSON.stringify({ status:"ok" }))
-    .setMimeType(ContentService.MimeType.JSON);
+
+  return addCorsHeaders(
+    ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
+      .setMimeType(ContentService.MimeType.JSON)
+  );
 }
+
+// IMPORTANT after pasting this new code:
+// Go to Deploy > Manage deployments > click the pencil ✏️ on your existing deployment
+// Change "Version" to "New version" then click Deploy.
+// This ensures the live URL picks up the updated code.
 
 ╔══════════════════════════════════════════════════════════════╗
 ║              GOOGLE SHEETS STRUCTURE                         ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Tab: "Questions"                                            ║
-║  ┌─────────────────┬──────────────┬──────────────┬────────┐ ║
-║  │ Question_EN     │ Question_IT  │ Question_ES  │Question_DE║
-║  │ What topics…    │ Quali arg…   │ ¿Qué temas…  │ Welche…║ ║
-║  │ What challenges…│ Quali sfide… │ ¿Cuáles son… │ Was…   ║ ║
-║  │ … (add any      │ number of    │ rows you     │ want)  ║ ║
-║  └─────────────────┴──────────────┴──────────────┴────────┘ ║
+║  Tab: "Questions"  (exact name, capital Q)                   ║
+║  A1: Question_EN  B1: Question_IT  C1: Question_ES  D1: Question_DE
+║  A2…: questions in each language, one row per question       ║
+║  Add/remove rows freely — page adapts automatically          ║
 ║                                                              ║
 ║  Tab: "Responses" — auto-created on first submission         ║
-║  Columns: Timestamp|Language|Email|Company|Question|Answer   ║
+║  Timestamp | Language | Email | Company | Question | Answer  ║
 ╚══════════════════════════════════════════════════════════════╝
 -->
 </body>
