@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Win a Custom E-Learning Module Worth €500</title>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONFIG — replace with your values
+     ═══════════════════════════════════════════════════════ -->
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby30Wjb4PdA9qhT4p8C0byZAxT7T_-2jZUS_-py6vRvLi0J_Y6xp45fy39gPD-rzDfGSQ/exec";
+</script>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:   #0F1B35;
+  --gold:   #F5C842;
+  --gold2:  #e6b730;
+  --teal:   #3ECFCF;
+  --white:  #FFFFFF;
+  --muted:  rgba(255,255,255,0.55);
+  --r:      16px;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  overflow: hidden;
+}
+
+/* ── Language switcher ──────────────────────────────── */
+#lang-switcher {
+  position: fixed; top: 18px; left: 20px; z-index: 300;
+  display: flex; gap: 4px;
+}
+.lang-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.45);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; padding: 5px 9px; border-radius: 8px;
+  cursor: pointer; transition: all .2s;
+}
+.lang-btn:hover { color: var(--white); border-color: rgba(255,255,255,.3); }
+.lang-btn.active {
+  background: rgba(62,207,207,.18);
+  border-color: var(--teal); color: var(--teal);
+}
+
+/* ── Progress bar ───────────────────────────────────── */
+#progress-wrap {
+  position: fixed; top: 0; left: 0; right: 0; height: 4px;
+  background: rgba(255,255,255,.08); z-index: 200;
+  opacity: 0; transition: opacity .4s;
+  pointer-events: none;
+}
+#progress-wrap.visible { opacity: 1; }
+#progress-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  transition: width .55s cubic-bezier(.4,0,.2,1);
+  border-radius: 0 4px 4px 0;
+}
+#progress-label {
+  position: fixed; top: 14px; right: 20px; z-index: 201;
+  font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  color: var(--muted); opacity: 0; transition: opacity .4s;
+  text-transform: uppercase; pointer-events: none;
+}
+#progress-label.visible { opacity: 1; }
+
+/* ── Screens ────────────────────────────────────────── */
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+.screen {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 60px 24px 40px;
+  opacity: 0; transform: translateY(60px);
+  transition: opacity .5s cubic-bezier(.4,0,.2,1),
+              transform .5s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+.screen.active   { opacity: 1; transform: translateY(0);   pointer-events: all; }
+.screen.exit-up  { opacity: 0; transform: translateY(-60px); }
+
+/* ── Welcome ────────────────────────────────────────── */
+.welcome-inner { max-width: 640px; text-align: center; }
+
+.prize-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(245,200,66,.12); border: 1px solid rgba(245,200,66,.3);
+  border-radius: 100px; padding: 8px 18px;
+  font-size: 13px; font-weight: 600; color: var(--gold);
+  letter-spacing: .04em; text-transform: uppercase; margin-bottom: 32px;
+}
+.welcome-inner h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem,5.5vw,3.4rem); line-height: 1.12; margin-bottom: 24px;
+}
+.hl {
+  background: linear-gradient(135deg, var(--gold) 0%, #ff9f43 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.welcome-inner > p {
+  font-size: clamp(15px,2vw,17px); line-height: 1.7;
+  color: rgba(255,255,255,.72); margin-bottom: 44px;
+  max-width: 520px; margin-left: auto; margin-right: auto;
+}
+.welcome-meta {
+  margin-top: 28px; font-size: 13px; color: rgba(255,255,255,.4);
+  display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;
+}
+.welcome-meta span { display: flex; align-items: center; gap: 5px; }
+
+/* ── Shared buttons ─────────────────────────────────── */
+.btn-gold {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--gold); color: var(--navy);
+  font-family: 'Inter', sans-serif; font-weight: 700; font-size: 16px;
+  padding: 16px 40px; border-radius: 100px; border: none; cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 24px rgba(245,200,66,.35);
+}
+.btn-gold:hover  { background: var(--gold2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(245,200,66,.45); }
+.btn-gold:active { transform: translateY(0); }
+.btn-gold .arr   { font-size: 18px; transition: transform .2s; }
+.btn-gold:hover .arr { transform: translateX(4px); }
+
+.btn-teal {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--teal); color: var(--navy);
+  font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px;
+  padding: 13px 32px; border-radius: 100px; border: none; cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 20px rgba(62,207,207,.3);
+}
+.btn-teal:hover  { background: #35bebe; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(62,207,207,.4); }
+.btn-teal:active { transform: translateY(0); }
+.btn-teal.loading { pointer-events: none; }
+.btn-teal.loading .lbl { opacity: 0; }
+.btn-teal .spin {
+  position: absolute; display: none;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(15,27,53,.25); border-top-color: var(--navy);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+.btn-teal.loading .spin { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-ghost {
+  background: transparent; border: none; cursor: pointer;
+  color: rgba(255,255,255,.4); font-family: 'Inter', sans-serif;
+  font-size: 14px; display: flex; align-items: center; gap: 6px;
+  padding: 8px 0; transition: color .2s;
+}
+.btn-ghost:hover { color: rgba(255,255,255,.85); }
+
+.row-actions {
+  display: flex; align-items: center; justify-content: space-between; margin-top: 22px;
+}
+
+/* ── Question ───────────────────────────────────────── */
+.q-inner { max-width: 680px; width: 100%; }
+
+.q-label {
+  font-size: 12px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 16px;
+}
+.q-inner h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.45rem,3.5vw,2.2rem); line-height: 1.25;
+  margin-bottom: 28px;
+}
+.ta-wrap { position: relative; }
+textarea {
+  width: 100%; min-height: 155px;
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.14);
+  border-radius: var(--r); color: var(--white);
+  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.65;
+  padding: 18px 20px; resize: none; outline: none;
+  transition: border-color .25s, background .25s;
+}
+textarea::placeholder { color: rgba(255,255,255,.28); }
+textarea:focus { border-color: var(--teal); background: rgba(255,255,255,.09); }
+.cc {
+  position: absolute; bottom: 10px; right: 14px;
+  font-size: 11px; color: rgba(255,255,255,.28); pointer-events: none;
+}
+.hint {
+  font-size: 12px; color: rgba(255,255,255,.32); margin-top: 9px;
+}
+
+/* ── Contact screen ─────────────────────────────────── */
+.ct-inner { max-width: 520px; width: 100%; }
+.ct-icon {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: rgba(245,200,66,.13); border: 1px solid rgba(245,200,66,.28);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 24px;
+}
+.ct-inner h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.4rem,3.2vw,2rem); line-height: 1.25; margin-bottom: 10px;
+}
+.ct-sub {
+  font-size: 15px; color: rgba(255,255,255,.58); line-height: 1.65; margin-bottom: 30px;
+}
+.field-stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 26px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label {
+  font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: rgba(255,255,255,.45);
+}
+.field input {
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.14);
+  border-radius: var(--r); color: var(--white);
+  font-family: 'Inter', sans-serif; font-size: 16px;
+  padding: 14px 18px; outline: none;
+  transition: border-color .25s, background .25s;
+}
+.field input::placeholder { color: rgba(255,255,255,.28); }
+.field input:focus  { border-color: var(--gold); background: rgba(255,255,255,.09); }
+.field input.err    { border-color: #ff4d6d; }
+
+/* ── Victory ────────────────────────────────────────── */
+.vic-inner { max-width: 540px; text-align: center; }
+.trophy {
+  width: 92px; height: 92px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold) 0%, #ff9f43 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px; font-size: 42px;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(245,200,66,.4); }
+  50%      { box-shadow: 0 0 0 22px rgba(245,200,66,0); }
+}
+.vic-inner h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.7rem,4vw,2.55rem); line-height: 1.2; margin-bottom: 18px;
+}
+.vic-inner p {
+  font-size: 16px; line-height: 1.8;
+  color: rgba(255,255,255,.7); margin-bottom: 34px;
+}
+
+/* ── Loading overlay ────────────────────────────────── */
+#loader {
+  position: fixed; inset: 0; background: var(--navy);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; z-index: 400; transition: opacity .5s;
+}
+#loader.hidden { opacity: 0; pointer-events: none; }
+.dots { display: flex; }
+.dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--teal); margin: 0 5px;
+  animation: bop .8s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: .15s; background: var(--gold); }
+.dot:nth-child(3) { animation-delay: .3s; }
+@keyframes bop {
+  0%,100% { transform: translateY(0); opacity:.45; }
+  50%      { transform: translateY(-13px); opacity:1; }
+}
+#loader-msg {
+  font-size: 13px; color: rgba(255,255,255,.35); letter-spacing: .04em;
+}
+
+/* ── Toast ──────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #ff4d6d; color: #fff;
+  padding: 11px 22px; border-radius: 100px;
+  font-size: 14px; font-weight: 500; z-index: 500;
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+  pointer-events: none; white-space: nowrap; max-width: 90vw;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── Confetti ───────────────────────────────────────── */
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 450; }
+
+/* ── Decorative orbs ────────────────────────────────── */
+.orb { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+.o1  { width:500px; height:500px; background:rgba(62,207,207,.07);  top:-150px; right:-100px; }
+.o2  { width:400px; height:400px; background:rgba(245,200,66,.06); bottom:-120px; left:-80px; }
+
+/* ── Mobile tweaks ──────────────────────────────────── */
+@media(max-width:520px){
+  .welcome-inner h1, .q-inner h2, .ct-inner h2 { font-size:1.45rem; }
+  textarea, .field input { font-size:15px; }
+  #lang-switcher { top:auto; bottom:14px; left:50%; transform:translateX(-50%); }
+  .screen { padding-bottom:64px; }
+}
+@media(prefers-reduced-motion:reduce){
+  *{ transition-duration:.01ms!important; animation-duration:.01ms!important; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+
+<!-- Language switcher -->
+<div id="lang-switcher">
+  <button class="lang-btn active" data-lang="en">EN</button>
+  <button class="lang-btn"        data-lang="it">IT</button>
+  <button class="lang-btn"        data-lang="es">ES</button>
+  <button class="lang-btn"        data-lang="de">DE</button>
+</div>
+
+<!-- Progress -->
+<div id="progress-wrap"><div id="progress-bar"></div></div>
+<div id="progress-label" id="prog-label"></div>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <div id="loader-msg">Loading survey…</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti"></canvas>
+
+<!-- ── App ── -->
+<div id="app">
+
+  <!-- Welcome -->
+  <div class="screen active" id="welcome">
+    <div class="welcome-inner">
+      <div class="prize-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span id="w-badge"></span>
+      </div>
+      <h1 id="w-heading"></h1>
+      <p  id="w-body"></p>
+      <button class="btn-gold" id="start-btn">
+        <span id="w-start-lbl"></span><span class="arr">→</span>
+      </button>
+      <div class="welcome-meta">
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="w-meta1"></span></span>
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span id="w-meta2"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question screens → injected by JS -->
+
+  <!-- Contact (outside progress count) -->
+  <div class="screen" id="contact-screen">
+    <div class="ct-inner">
+      <div class="ct-icon">🎁</div>
+      <h2 id="ct-heading"></h2>
+      <p  class="ct-sub" id="ct-sub"></p>
+      <div class="field-stack">
+        <div class="field">
+          <label id="ct-lbl-email"></label>
+          <input type="email" id="inp-email" autocomplete="email">
+        </div>
+        <div class="field">
+          <label id="ct-lbl-company"></label>
+          <input type="text" id="inp-company" autocomplete="organization">
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn-ghost" id="ct-back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <span id="ct-back-lbl"></span>
+        </button>
+        <button class="btn-teal" id="ct-submit-btn">
+          <span class="spin"></span>
+          <span class="lbl" id="ct-submit-lbl"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory -->
+  <div class="screen" id="victory">
+    <div class="vic-inner">
+      <div class="trophy">🏆</div>
+      <h2 id="vic-heading"></h2>
+      <p  id="vic-body"></p>
+      <button class="btn-gold" onclick="window.location.reload()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span id="vic-restart-lbl"></span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  UI TRANSLATIONS  (non-question strings)
+// ═══════════════════════════════════════════════════════════════
+const UI = {
+  en: {
+    badge:          "Limited opportunity",
+    heading:        'Win a custom e-learning module worth <span class="hl">€500</span>',
+    body:           "Complete this short survey for a chance to receive a custom e-learning module worth €500 for your learners.",
+    startBtn:       "Start Survey",
+    meta1:          "Only takes a few minutes",
+    meta2:          "Responses kept private",
+    progressOf:     (c,t)=>`Question ${c} of ${t}`,
+    answerPH:       "Type your answer here…",
+    hint:           `Press <strong style="color:rgba(255,255,255,.62)">Enter ↵</strong> for a new line &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> to continue`,
+    nextBtn:        "Next →",
+    lastBtn:        "Next →",
+    backBtn:        "Back",
+    ctHeading:      "Almost there — claim your entry!",
+    ctSub:          "Leave your details so we can reach you if you win the custom e-learning module worth €500.",
+    ctLblEmail:     "Email address",
+    ctPhEmail:      "you@company.com",
+    ctLblCompany:   "Company name",
+    ctPhCompany:    "Your company",
+    ctSubmitBtn:    "Submit →",
+    vicHeading:     'You\'re <em style="color:var(--gold)">amazing</em> — thank you!',
+    vicBody:        'Your insights are genuinely valuable and help us build better learning experiences. You\'ve been entered into the draw for a custom e-learning module worth <strong style="color:var(--white)">€500</strong> — we\'ll be in touch soon! 🎉',
+    restartBtn:     "Start again",
+    errEmail:       "Please enter a valid email address.",
+    errSubmit:      "Submission failed — please try again.",
+    loading:        "Loading survey…",
+  },
+  it: {
+    badge:          "Opportunità limitata",
+    heading:        'Vinci un modulo e-learning personalizzato del valore di <span class="hl">€500</span>',
+    body:           "Compila questo breve sondaggio per avere la possibilità di ricevere un modulo e-learning personalizzato del valore di €500 per i tuoi corsisti.",
+    startBtn:       "Inizia il sondaggio",
+    meta1:          "Solo pochi minuti",
+    meta2:          "Risposte riservate",
+    progressOf:     (c,t)=>`Domanda ${c} di ${t}`,
+    answerPH:       "Scrivi qui la tua risposta…",
+    hint:           `Premi <strong style="color:rgba(255,255,255,.62)">Invio ↵</strong> per andare a capo &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> per continuare`,
+    nextBtn:        "Avanti →",
+    lastBtn:        "Avanti →",
+    backBtn:        "Indietro",
+    ctHeading:      "Quasi fatto — registra la tua partecipazione!",
+    ctSub:          "Lascia i tuoi dati così potremo contattarti se vinci il modulo e-learning personalizzato del valore di €500.",
+    ctLblEmail:     "Indirizzo e-mail",
+    ctPhEmail:      "tu@azienda.com",
+    ctLblCompany:   "Nome azienda",
+    ctPhCompany:    "La tua azienda",
+    ctSubmitBtn:    "Invia →",
+    vicHeading:     'Sei <em style="color:var(--gold)">fantastico/a</em> — grazie!',
+    vicBody:        'Le tue risposte sono molto preziose e ci aiutano a creare esperienze di apprendimento migliori. Sei stato inserito nell\'estrazione per un modulo e-learning del valore di <strong style="color:var(--white)">€500</strong> — ti contatteremo presto! 🎉',
+    restartBtn:     "Ricomincia",
+    errEmail:       "Inserisci un indirizzo e-mail valido.",
+    errSubmit:      "Invio fallito — riprova.",
+    loading:        "Caricamento del sondaggio…",
+  },
+  es: {
+    badge:          "Oportunidad limitada",
+    heading:        'Gana un módulo de e-learning personalizado valorado en <span class="hl">€500</span>',
+    body:           "Completa esta breve encuesta para tener la oportunidad de recibir un módulo de e-learning personalizado valorado en €500 para tus alumnos.",
+    startBtn:       "Comenzar encuesta",
+    meta1:          "Solo unos minutos",
+    meta2:          "Respuestas confidenciales",
+    progressOf:     (c,t)=>`Pregunta ${c} de ${t}`,
+    answerPH:       "Escribe tu respuesta aquí…",
+    hint:           `Pulsa <strong style="color:rgba(255,255,255,.62)">Intro ↵</strong> para nueva línea &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> para continuar`,
+    nextBtn:        "Siguiente →",
+    lastBtn:        "Siguiente →",
+    backBtn:        "Atrás",
+    ctHeading:      "¡Casi listo — confirma tu participación!",
+    ctSub:          "Déjanos tus datos para poder contactarte si ganas el módulo de e-learning personalizado valorado en €500.",
+    ctLblEmail:     "Correo electrónico",
+    ctPhEmail:      "tu@empresa.com",
+    ctLblCompany:   "Nombre de la empresa",
+    ctPhCompany:    "Tu empresa",
+    ctSubmitBtn:    "Enviar →",
+    vicHeading:     '¡Eres <em style="color:var(--gold)">increíble</em> — gracias!',
+    vicBody:        'Tus respuestas son muy valiosas y nos ayudan a crear mejores experiencias de aprendizaje. Has sido inscrito en el sorteo de un módulo de e-learning valorado en <strong style="color:var(--white)">€500</strong> — ¡nos pondremos en contacto pronto! 🎉',
+    restartBtn:     "Empezar de nuevo",
+    errEmail:       "Por favor, introduce un correo electrónico válido.",
+    errSubmit:      "Envío fallido — inténtalo de nuevo.",
+    loading:        "Cargando encuesta…",
+  },
+  de: {
+    badge:          "Begrenzte Möglichkeit",
+    heading:        'Gewinne ein maßgeschneidertes E-Learning-Modul im Wert von <span class="hl">€500</span>',
+    body:           "Nimm an dieser kurzen Umfrage teil und erhalte die Chance, ein maßgeschneidertes E-Learning-Modul im Wert von €500 für deine Lernenden zu gewinnen.",
+    startBtn:       "Umfrage starten",
+    meta1:          "Nur wenige Minuten",
+    meta2:          "Antworten vertraulich",
+    progressOf:     (c,t)=>`Frage ${c} von ${t}`,
+    answerPH:       "Schreibe hier deine Antwort…",
+    hint:           `<strong style="color:rgba(255,255,255,.62)">Eingabe ↵</strong> für neue Zeile &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> zum Fortfahren`,
+    nextBtn:        "Weiter →",
+    lastBtn:        "Weiter →",
+    backBtn:        "Zurück",
+    ctHeading:      "Fast geschafft — sichere deinen Eintrag!",
+    ctSub:          "Hinterlasse deine Kontaktdaten, damit wir dich erreichen können, falls du das E-Learning-Modul im Wert von €500 gewinnst.",
+    ctLblEmail:     "E-Mail-Adresse",
+    ctPhEmail:      "du@unternehmen.de",
+    ctLblCompany:   "Unternehmensname",
+    ctPhCompany:    "Dein Unternehmen",
+    ctSubmitBtn:    "Absenden →",
+    vicHeading:     'Du bist <em style="color:var(--gold)">großartig</em> — danke!',
+    vicBody:        'Deine Antworten sind äußerst wertvoll und helfen uns, bessere Lernerfahrungen zu gestalten. Du nimmst jetzt an der Verlosung eines E-Learning-Moduls im Wert von <strong style="color:var(--white)">€500</strong> teil — wir melden uns bald! 🎉',
+    restartBtn:     "Neu starten",
+    errEmail:       "Bitte gib eine gültige E-Mail-Adresse ein.",
+    errSubmit:      "Übermittlung fehlgeschlagen — bitte erneut versuchen.",
+    loading:        "Umfrage wird geladen…",
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let lang       = 'en';
+// questionBank: array of { en, it, es, de } objects — loaded from Sheets
+// fallback if Sheets not configured
+let questionBank = [
+  { en:"What are some topics you most like to provide training on?",           it:"Quali argomenti preferisci utilizzare per la formazione?",                        es:"¿Qué temas te gusta más utilizar para la formación?",                          de:"Zu welchen Themen führst du am liebsten Schulungen durch?" },
+  { en:"What are your biggest challenges when providing training?",             it:"Quali sono le tue maggiori sfide nell'erogare formazione?",                       es:"¿Cuáles son tus mayores desafíos al impartir formación?",                       de:"Was sind deine größten Herausforderungen bei der Durchführung von Schulungen?" },
+  { en:"How do you currently deliver training?",                                it:"Come eroghi attualmente la formazione?",                                          es:"¿Cómo impartes actualmente la formación?",                                     de:"Wie führst du derzeit Schulungen durch?" },
+  { en:"How beneficial do you think e-learning could be for your organization?",it:"Quanto pensi che l'e-learning possa essere utile per la tua organizzazione?",    es:"¿Cuán beneficioso crees que podría ser el e-learning para tu organización?",  de:"Wie nützlich könnte E-Learning deiner Meinung nach für deine Organisation sein?" },
+  { en:"Who would you like to provide training for?",                           it:"Per chi vorresti erogare formazione?",                                            es:"¿Para quién te gustaría impartir formación?",                                  de:"Für wen möchtest du Schulungen anbieten?" }
+];
+
+let answers  = [];  // parallel to questionBank
+let current  = -1;  // -1=welcome  0..n-1=questions  n=contact
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+const u    = key => UI[lang][key] ?? UI.en[key] ?? key;
+const esc  = s   => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const $    = id  => document.getElementById(id);
+const nQ   = ()  => questionBank.length;
+const qTxt = i   => questionBank[i][lang] || questionBank[i].en || "";
+
+function toast(msg, ms=4200){
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), ms);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOAD QUESTIONS FROM SHEETS
+//  Expected sheet "Questions":
+//    Row 1 (header): Question_EN | Question_IT | Question_ES | Question_DE
+//    Row 2+:  one question per row, four language columns
+//  Apps Script returns: { questions: [{en,it,es,de}, …] }
+// ═══════════════════════════════════════════════════════════════
+async function loadQuestions(){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=getQuestions`);
+    const data = await res.json();
+    if(data.questions && data.questions.length) questionBank = data.questions;
+  } catch(e){ console.warn("Sheets unavailable, using fallback questions.", e); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SUBMIT
+// ═══════════════════════════════════════════════════════════════
+async function submitAll(){
+  const email   = $('inp-email').value.trim();
+  const company = $('inp-company').value.trim();
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
+    console.log("Demo submit:", { email, company, lang, answers }); return;
+  }
+  await fetch(APPS_SCRIPT_URL, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      action:"submitAnswers",
+      timestamp: new Date().toISOString(),
+      language: lang, email, company,
+      answers: questionBank.map((q,i)=>({ question: q[lang]||q.en, answer: answers[i]||"" }))
+    })
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BUILD QUESTION DOM  (called once on init, or on language switch)
+//  Language switch: questions are already in DOM — we just
+//  update their text content via refreshQuestionTexts().
+// ═══════════════════════════════════════════════════════════════
+function buildQuestionScreens(){
+  // Remove any existing question screens first
+  document.querySelectorAll('.q-screen').forEach(el=>el.remove());
+
+  const app     = $('app');
+  const contact = $('contact-screen');
+
+  questionBank.forEach((qObj, i)=>{
+    const div = document.createElement('div');
+    div.className = 'screen q-screen';
+    div.id = `q-${i}`;
+    div.innerHTML=`
+      <div class="q-inner">
+        <div class="q-label" id="qlbl-${i}"></div>
+        <h2 id="qtxt-${i}"></h2>
+        <div class="ta-wrap">
+          <textarea id="ans-${i}" rows="5" maxlength="2000"></textarea>
+          <span class="cc" id="cc-${i}">0 / 2000</span>
+        </div>
+        <p class="hint" id="hint-${i}"></p>
+        <div class="row-actions">
+          <button class="btn-ghost" onclick="goBack(${i})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            <span id="qback-${i}"></span>
+          </button>
+          <button class="btn-teal" id="qnext-${i}" onclick="goNext(${i})">
+            <span class="spin"></span>
+            <span class="lbl" id="qnextlbl-${i}"></span>
+          </button>
+        </div>
+      </div>`;
+    app.insertBefore(div, contact);
+
+    const ta = $(`ans-${i}`);
+    const cc = $(`cc-${i}`);
+    // Restore any previously typed answer
+    if(answers[i]) ta.value = answers[i];
+    ta.addEventListener('input',()=>{
+      answers[i]=ta.value;
+      cc.textContent=`${ta.value.length} / 2000`;
+    });
+    ta.addEventListener('keydown', e=>{
+      if(e.key==='Tab'){ e.preventDefault(); goNext(i); }
+    });
+  });
+
+  // Initialise answers array length
+  if(answers.length!==questionBank.length) answers=Array(questionBank.length).fill("");
+}
+
+// Update just the text nodes when language switches (no DOM rebuild)
+function refreshQuestionTexts(){
+  const n = nQ();
+  $('q-total').textContent = n;
+  questionBank.forEach((_,i)=>{
+    const lbl = $(`qlbl-${i}`);
+    const txt = $(`qtxt-${i}`);
+    const ta  = $(`ans-${i}`);
+    const ht  = $(`hint-${i}`);
+    const nb  = $(`qnextlbl-${i}`);
+    const bb  = $(`qback-${i}`);
+    if(lbl) lbl.textContent = u('progressOf')(i+1, n);
+    if(txt) txt.textContent = qTxt(i);
+    if(ta)  ta.placeholder  = u('answerPH');
+    if(ht)  ht.innerHTML    = u('hint');
+    if(nb)  nb.textContent  = (i < n-1) ? u('nextBtn') : u('lastBtn');
+    if(bb)  bb.textContent  = u('backBtn');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  APPLY ALL UI TRANSLATIONS
+// ═══════════════════════════════════════════════════════════════
+function applyUI(){
+  $('w-badge').textContent   = u('badge');
+  $('w-heading').innerHTML   = u('heading');
+  $('w-body').textContent    = u('body');
+  $('w-start-lbl').textContent = u('startBtn');
+  $('w-meta1').textContent   = u('meta1');
+  $('w-meta2').textContent   = u('meta2');
+
+  $('ct-heading').textContent  = u('ctHeading');
+  $('ct-sub').textContent      = u('ctSub');
+  $('ct-lbl-email').textContent= u('ctLblEmail');
+  $('inp-email').placeholder   = u('ctPhEmail');
+  $('ct-lbl-company').textContent = u('ctLblCompany');
+  $('inp-company').placeholder = u('ctPhCompany');
+  $('ct-submit-lbl').textContent = u('ctSubmitBtn');
+  $('ct-back-lbl').textContent   = u('backBtn');
+
+  $('vic-heading').innerHTML  = u('vicHeading');
+  $('vic-body').innerHTML     = u('vicBody');
+  $('vic-restart-lbl').textContent = u('restartBtn');
+
+  $('loader-msg').textContent = u('loading');
+  $('q-total').textContent    = nQ();
+
+  refreshQuestionTexts();
+  updateProgressLabel();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LANGUAGE SWITCH
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll('.lang-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    lang = btn.dataset.lang;
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    applyUI();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id){
+  const cur = document.querySelector('.screen.active');
+  if(cur){ cur.classList.remove('active'); cur.classList.add('exit-up');
+    setTimeout(()=>cur.classList.remove('exit-up'),600); }
+  setTimeout(()=>{ const el=$(id); if(el) el.classList.add('active'); },80);
+}
+
+function updateProgress(){
+  const wrap = $('progress-wrap');
+  const bar  = $('progress-bar');
+  const lbl  = $('progress-label');
+  const onQ  = current>=0 && current<nQ();
+  if(!onQ){ wrap.classList.remove('visible'); lbl.classList.remove('visible'); return; }
+  wrap.classList.add('visible'); lbl.classList.add('visible');
+  bar.style.width = ((current+1)/nQ()*100)+'%';
+  updateProgressLabel();
+}
+
+function updateProgressLabel(){
+  if(current<0||current>=nQ()) return;
+  $('progress-label').textContent = u('progressOf')(current+1, nQ());
+}
+
+$('start-btn').addEventListener('click',()=>{
+  current=0; showScreen('q-0'); updateProgress();
+  setTimeout(()=>$('ans-0')?.focus(),400);
+});
+
+function goBack(i){
+  if(i===0){ current=-1; showScreen('welcome'); updateProgress(); }
+  else { current=i-1; showScreen(`q-${i-1}`); updateProgress();
+    setTimeout(()=>$(`ans-${i-1}`)?.focus(),400); }
+}
+
+function goNext(i){
+  if(i<nQ()-1){
+    current=i+1; showScreen(`q-${i+1}`); updateProgress();
+    setTimeout(()=>$(`ans-${i+1}`)?.focus(),400);
+  } else {
+    current=nQ(); // contact screen — outside progress
+    showScreen('contact-screen'); updateProgress();
+    setTimeout(()=>$('inp-email')?.focus(),400);
+  }
+}
+
+$('ct-back-btn').addEventListener('click',()=>{
+  current=nQ()-1; showScreen(`q-${current}`); updateProgress();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CONTACT SUBMIT
+// ═══════════════════════════════════════════════════════════════
+$('ct-submit-btn').addEventListener('click', async()=>{
+  const emailEl = $('inp-email');
+  emailEl.classList.remove('err');
+  if(!emailEl.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)){
+    emailEl.classList.add('err'); toast(u('errEmail')); emailEl.focus(); return;
+  }
+  const btn = $('ct-submit-btn');
+  btn.classList.add('loading');
+  try { await submitAll(); }
+  catch(e){ toast(u('errSubmit')); btn.classList.remove('loading'); return; }
+  btn.classList.remove('loading');
+  $('progress-wrap').classList.remove('visible');
+  $('progress-label').classList.remove('visible');
+  showScreen('victory');
+  confetti();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════════════
+function confetti(){
+  const cv=$('confetti'), cx=cv.getContext('2d');
+  cv.width=innerWidth; cv.height=innerHeight;
+  const cols=["#F5C842","#3ECFCF","#ff9f43","#fff","#a78bfa","#fb7185","#34d399"];
+  const ps=Array.from({length:170},()=>({
+    x:Math.random()*cv.width, y:-20-Math.random()*220,
+    r:3.5+Math.random()*6, d:1.4+Math.random()*2.8,
+    c:cols[~~(Math.random()*cols.length)],
+    ts:.08+Math.random()*.28, a:0,
+    sq:Math.random()>.45
+  }));
+  let f=0;
+  (function draw(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{
+      cx.save(); cx.fillStyle=p.c;
+      cx.globalAlpha=Math.max(0,1-f/215);
+      cx.translate(p.x,p.y); cx.rotate(p.a*Math.PI/180);
+      p.sq ? cx.fillRect(-p.r/2,-p.r/2,p.r*2,p.r)
+           : (cx.beginPath(),cx.arc(0,0,p.r/2,0,2*Math.PI),cx.fill());
+      cx.restore();
+      p.y+=p.d; p.x+=Math.sin(p.a*.018)*1.3; p.a+=p.ts;
+      if(p.y>cv.height){p.y=-20;p.x=Math.random()*cv.width;}
+    });
+    if(++f<235) requestAnimationFrame(draw);
+    else cx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+(async()=>{
+  const loader=$('loader');
+  $('loader-msg').textContent = u('loading');
+  await loadQuestions();
+  buildQuestionScreens();
+  applyUI();
+  loader.classList.add('hidden');
+})();
+</script>
+
+<!--
+╔══════════════════════════════════════════════════════════════╗
+║        GOOGLE APPS SCRIPT  (paste in Apps Script editor)     ║
+╚══════════════════════════════════════════════════════════════╝
+
+const SS_ID = "YOUR_SPREADSHEET_ID";
+
+function doGet(e) {
+  if (e.parameter.action === "getQuestions") {
+    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
+    // Row 1 = headers: Question_EN | Question_IT | Question_ES | Question_DE
+    // Row 2+ = actual questions (add as many rows as you like)
+    const rows = sheet.getDataRange().getValues().slice(1); // skip header
+    const questions = rows
+      .filter(r => r[0] || r[1] || r[2] || r[3]) // skip empty rows
+      .map(r => ({ en: r[0]||"", it: r[1]||"", es: r[2]||"", de: r[3]||"" }));
+    return ContentService
+      .createTextOutput(JSON.stringify({ questions }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const ss   = SpreadsheetApp.openById(SS_ID);
+  let resp   = ss.getSheetByName("Responses");
+  if (!resp) {
+    resp = ss.insertSheet("Responses");
+    resp.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
+  }
+  if (body.action === "submitAnswers") {
+    body.answers.forEach(a => {
+      resp.appendRow([body.timestamp, body.language,
+                      body.email, body.company,
+                      a.question, a.answer]);
+    });
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify({ status:"ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+╔══════════════════════════════════════════════════════════════╗
+║              GOOGLE SHEETS STRUCTURE                         ║
+╠══════════════════════════════════════════════════════════════╣
+║  Tab: "Questions"                                            ║
+║  ┌─────────────────┬──────────────┬──────────────┬────────┐ ║
+║  │ Question_EN     │ Question_IT  │ Question_ES  │Question_DE║
+║  │ What topics…    │ Quali arg…   │ ¿Qué temas…  │ Welche…║ ║
+║  │ What challenges…│ Quali sfide… │ ¿Cuáles son… │ Was…   ║ ║
+║  │ … (add any      │ number of    │ rows you     │ want)  ║ ║
+║  └─────────────────┴──────────────┴──────────────┴────────┘ ║
+║                                                              ║
+║  Tab: "Responses" — auto-created on first submission         ║
+║  Columns: Timestamp|Language|Email|Company|Question|Answer   ║
+╚══════════════════════════════════════════════════════════════╝
+-->
+</body>
+</html>
