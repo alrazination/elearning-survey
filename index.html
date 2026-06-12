@@ -5,310 +5,190 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Win a Custom E-Learning Module Worth €500</title>
 
-<!-- ═══════════════════════════════════════════════════════
-     CONFIG — replace with your values
-     ═══════════════════════════════════════════════════════ -->
 <script>
+  /* ── ONLY LINE YOU NEED TO EDIT ───────────────────────────────
+     Paste your Apps Script /exec URL below.
+     Leave as-is to run with built-in fallback questions.
+  ─────────────────────────────────────────────────────────────── */
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby30Wjb4PdA9qhT4p8C0byZAxT7T_-2jZUS_-py6vRvLi0J_Y6xp45fy39gPD-rzDfGSQ/exec";
 </script>
-<!-- ═══════════════════════════════════════════════════════ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0F1B35;--gold:#F5C842;--gold2:#e6b730;
+  --teal:#3ECFCF;--white:#fff;--muted:rgba(255,255,255,.55);--r:16px;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);overflow:hidden}
 
-:root {
-  --navy:   #0F1B35;
-  --gold:   #F5C842;
-  --gold2:  #e6b730;
-  --teal:   #3ECFCF;
-  --white:  #FFFFFF;
-  --muted:  rgba(255,255,255,0.55);
-  --r:      16px;
-}
+/* Lang switcher */
+#lang-sw{position:fixed;top:18px;left:20px;z-index:300;display:flex;gap:4px}
+.lb{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 9px;border-radius:8px;cursor:pointer;transition:all .2s}
+.lb:hover{color:var(--white);border-color:rgba(255,255,255,.3)}
+.lb.on{background:rgba(62,207,207,.18);border-color:var(--teal);color:var(--teal)}
 
-html, body {
-  height: 100%;
-  font-family: 'Inter', sans-serif;
-  background: var(--navy);
-  color: var(--white);
-  overflow: hidden;
-}
+/* Progress */
+#pw{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.08);
+  z-index:200;opacity:0;transition:opacity .4s;pointer-events:none}
+#pw.show{opacity:1}
+#pb{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--gold));
+  transition:width .55s cubic-bezier(.4,0,.2,1);border-radius:0 4px 4px 0}
+#pl{position:fixed;top:14px;right:20px;z-index:201;font-size:11px;font-weight:600;
+  letter-spacing:.08em;color:var(--muted);opacity:0;transition:opacity .4s;
+  text-transform:uppercase;pointer-events:none}
+#pl.show{opacity:1}
 
-/* ── Language switcher ──────────────────────────────── */
-#lang-switcher {
-  position: fixed; top: 18px; left: 20px; z-index: 300;
-  display: flex; gap: 4px;
-}
-.lang-btn {
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.45);
-  font-family: 'Inter', sans-serif;
-  font-size: 11px; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; padding: 5px 9px; border-radius: 8px;
-  cursor: pointer; transition: all .2s;
-}
-.lang-btn:hover { color: var(--white); border-color: rgba(255,255,255,.3); }
-.lang-btn.active {
-  background: rgba(62,207,207,.18);
-  border-color: var(--teal); color: var(--teal);
-}
+/* Screens */
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:60px 24px 40px;opacity:0;transform:translateY(60px);
+  transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1);
+  pointer-events:none}
+.screen.active{opacity:1;transform:translateY(0);pointer-events:all}
+.screen.exit{opacity:0;transform:translateY(-60px)}
 
-/* ── Progress bar ───────────────────────────────────── */
-#progress-wrap {
-  position: fixed; top: 0; left: 0; right: 0; height: 4px;
-  background: rgba(255,255,255,.08); z-index: 200;
-  opacity: 0; transition: opacity .4s;
-  pointer-events: none;
-}
-#progress-wrap.visible { opacity: 1; }
-#progress-bar {
-  height: 100%; width: 0%;
-  background: linear-gradient(90deg, var(--teal), var(--gold));
-  transition: width .55s cubic-bezier(.4,0,.2,1);
-  border-radius: 0 4px 4px 0;
-}
-#progress-label {
-  position: fixed; top: 14px; right: 20px; z-index: 201;
-  font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  color: var(--muted); opacity: 0; transition: opacity .4s;
-  text-transform: uppercase; pointer-events: none;
-}
-#progress-label.visible { opacity: 1; }
+/* Welcome */
+.wi{max-width:640px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(245,200,66,.12);
+  border:1px solid rgba(245,200,66,.3);border-radius:100px;padding:8px 18px;
+  font-size:13px;font-weight:600;color:var(--gold);letter-spacing:.04em;
+  text-transform:uppercase;margin-bottom:32px}
+.wi h1{font-family:'DM Serif Display',serif;font-size:clamp(2rem,5.5vw,3.4rem);
+  line-height:1.12;margin-bottom:24px}
+.hl{background:linear-gradient(135deg,var(--gold) 0%,#ff9f43 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.wi>p{font-size:clamp(15px,2vw,17px);line-height:1.7;color:rgba(255,255,255,.72);
+  margin-bottom:44px;max-width:520px;margin-left:auto;margin-right:auto}
+.meta{margin-top:28px;font-size:13px;color:rgba(255,255,255,.4);
+  display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
+.meta span{display:flex;align-items:center;gap:5px}
 
-/* ── Screens ────────────────────────────────────────── */
-#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+/* Buttons */
+.btn-g{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:var(--navy);
+  font-family:'Inter',sans-serif;font-weight:700;font-size:16px;padding:16px 40px;
+  border-radius:100px;border:none;cursor:pointer;
+  transition:background .2s,transform .15s,box-shadow .2s;
+  box-shadow:0 4px 24px rgba(245,200,66,.35)}
+.btn-g:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,200,66,.45)}
+.btn-g:active{transform:translateY(0)}
+.arr{font-size:18px;transition:transform .2s}
+.btn-g:hover .arr{transform:translateX(4px)}
 
-.screen {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px 40px;
-  opacity: 0; transform: translateY(60px);
-  transition: opacity .5s cubic-bezier(.4,0,.2,1),
-              transform .5s cubic-bezier(.4,0,.2,1);
-  pointer-events: none;
-}
-.screen.active   { opacity: 1; transform: translateY(0);   pointer-events: all; }
-.screen.exit-up  { opacity: 0; transform: translateY(-60px); }
+.btn-t{position:relative;display:inline-flex;align-items:center;gap:8px;
+  background:var(--teal);color:var(--navy);font-family:'Inter',sans-serif;
+  font-weight:700;font-size:15px;padding:13px 32px;border-radius:100px;border:none;
+  cursor:pointer;transition:background .2s,transform .15s,box-shadow .2s;
+  box-shadow:0 4px 20px rgba(62,207,207,.3)}
+.btn-t:hover{background:#35bebe;transform:translateY(-2px);box-shadow:0 8px 28px rgba(62,207,207,.4)}
+.btn-t:active{transform:translateY(0)}
+.btn-t.busy{pointer-events:none}
+.btn-t.busy .bl{opacity:0}
+.sp{position:absolute;display:none;width:18px;height:18px;
+  border:2px solid rgba(15,27,53,.25);border-top-color:var(--navy);
+  border-radius:50%;animation:spin .7s linear infinite}
+.btn-t.busy .sp{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Welcome ────────────────────────────────────────── */
-.welcome-inner { max-width: 640px; text-align: center; }
+.btn-bk{background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);
+  font-family:'Inter',sans-serif;font-size:14px;display:flex;align-items:center;
+  gap:6px;padding:8px 0;transition:color .2s}
+.btn-bk:hover{color:rgba(255,255,255,.85)}
+.row{display:flex;align-items:center;justify-content:space-between;margin-top:22px}
 
-.prize-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(245,200,66,.12); border: 1px solid rgba(245,200,66,.3);
-  border-radius: 100px; padding: 8px 18px;
-  font-size: 13px; font-weight: 600; color: var(--gold);
-  letter-spacing: .04em; text-transform: uppercase; margin-bottom: 32px;
-}
-.welcome-inner h1 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(2rem,5.5vw,3.4rem); line-height: 1.12; margin-bottom: 24px;
-}
-.hl {
-  background: linear-gradient(135deg, var(--gold) 0%, #ff9f43 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.welcome-inner > p {
-  font-size: clamp(15px,2vw,17px); line-height: 1.7;
-  color: rgba(255,255,255,.72); margin-bottom: 44px;
-  max-width: 520px; margin-left: auto; margin-right: auto;
-}
-.welcome-meta {
-  margin-top: 28px; font-size: 13px; color: rgba(255,255,255,.4);
-  display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;
-}
-.welcome-meta span { display: flex; align-items: center; gap: 5px; }
+/* Question */
+.qi{max-width:680px;width:100%}
+.ql{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:16px}
+.qi h2{font-family:'DM Serif Display',serif;font-size:clamp(1.45rem,3.5vw,2.2rem);
+  line-height:1.25;margin-bottom:28px}
+.taw{position:relative}
+textarea{width:100%;min-height:155px;background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.14);border-radius:var(--r);color:var(--white);
+  font-family:'Inter',sans-serif;font-size:16px;line-height:1.65;
+  padding:18px 20px;resize:none;outline:none;
+  transition:border-color .25s,background .25s}
+textarea::placeholder{color:rgba(255,255,255,.28)}
+textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
+.cc{position:absolute;bottom:10px;right:14px;font-size:11px;
+  color:rgba(255,255,255,.28);pointer-events:none}
+.hint{font-size:12px;color:rgba(255,255,255,.32);margin-top:9px}
 
-/* ── Shared buttons ─────────────────────────────────── */
-.btn-gold {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--gold); color: var(--navy);
-  font-family: 'Inter', sans-serif; font-weight: 700; font-size: 16px;
-  padding: 16px 40px; border-radius: 100px; border: none; cursor: pointer;
-  transition: background .2s, transform .15s, box-shadow .2s;
-  box-shadow: 0 4px 24px rgba(245,200,66,.35);
-}
-.btn-gold:hover  { background: var(--gold2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(245,200,66,.45); }
-.btn-gold:active { transform: translateY(0); }
-.btn-gold .arr   { font-size: 18px; transition: transform .2s; }
-.btn-gold:hover .arr { transform: translateX(4px); }
+/* Contact */
+.ci{max-width:520px;width:100%}
+.cico{width:54px;height:54px;border-radius:50%;background:rgba(245,200,66,.13);
+  border:1px solid rgba(245,200,66,.28);display:flex;align-items:center;
+  justify-content:center;font-size:24px;margin-bottom:24px}
+.ci h2{font-family:'DM Serif Display',serif;font-size:clamp(1.4rem,3.2vw,2rem);
+  line-height:1.25;margin-bottom:10px}
+.csub{font-size:15px;color:rgba(255,255,255,.58);line-height:1.65;margin-bottom:30px}
+.fs{display:flex;flex-direction:column;gap:16px;margin-bottom:26px}
+.fi{display:flex;flex-direction:column;gap:7px}
+.fi label{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:rgba(255,255,255,.45)}
+.fi input{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.14);
+  border-radius:var(--r);color:var(--white);font-family:'Inter',sans-serif;
+  font-size:16px;padding:14px 18px;outline:none;transition:border-color .25s,background .25s}
+.fi input::placeholder{color:rgba(255,255,255,.28)}
+.fi input:focus{border-color:var(--gold);background:rgba(255,255,255,.09)}
+.fi input.err{border-color:#ff4d6d}
 
-.btn-teal {
-  position: relative;
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--teal); color: var(--navy);
-  font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px;
-  padding: 13px 32px; border-radius: 100px; border: none; cursor: pointer;
-  transition: background .2s, transform .15s, box-shadow .2s;
-  box-shadow: 0 4px 20px rgba(62,207,207,.3);
-}
-.btn-teal:hover  { background: #35bebe; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(62,207,207,.4); }
-.btn-teal:active { transform: translateY(0); }
-.btn-teal.loading { pointer-events: none; }
-.btn-teal.loading .lbl { opacity: 0; }
-.btn-teal .spin {
-  position: absolute; display: none;
-  width: 18px; height: 18px;
-  border: 2px solid rgba(15,27,53,.25); border-top-color: var(--navy);
-  border-radius: 50%; animation: spin .7s linear infinite;
-}
-.btn-teal.loading .spin { display: block; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Victory */
+.vi{max-width:540px;text-align:center}
+.trophy{width:92px;height:92px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold) 0%,#ff9f43 100%);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 28px;font-size:42px;
+  animation:pglow 2.2s ease-in-out infinite}
+@keyframes pglow{
+  0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.4)}
+  50%{box-shadow:0 0 0 22px rgba(245,200,66,0)}}
+.vi h2{font-family:'DM Serif Display',serif;font-size:clamp(1.7rem,4vw,2.55rem);
+  line-height:1.2;margin-bottom:18px}
+.vi p{font-size:16px;line-height:1.8;color:rgba(255,255,255,.7);margin-bottom:34px}
 
-.btn-ghost {
-  background: transparent; border: none; cursor: pointer;
-  color: rgba(255,255,255,.4); font-family: 'Inter', sans-serif;
-  font-size: 14px; display: flex; align-items: center; gap: 6px;
-  padding: 8px 0; transition: color .2s;
-}
-.btn-ghost:hover { color: rgba(255,255,255,.85); }
+/* Loader */
+#loader{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;z-index:400;
+  transition:opacity .4s}
+#loader.gone{opacity:0;pointer-events:none}
+.dots{display:flex}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--teal);margin:0 5px;
+  animation:bop .8s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.15s;background:var(--gold)}
+.dot:nth-child(3){animation-delay:.3s}
+@keyframes bop{0%,100%{transform:translateY(0);opacity:.45}50%{transform:translateY(-13px);opacity:1}}
+#lmsg{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:.04em}
 
-.row-actions {
-  display: flex; align-items: center; justify-content: space-between; margin-top: 22px;
-}
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#ff4d6d;color:#fff;padding:11px 22px;border-radius:100px;
+  font-size:14px;font-weight:500;z-index:500;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;white-space:nowrap;max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
 
-/* ── Question ───────────────────────────────────────── */
-.q-inner { max-width: 680px; width: 100%; }
+/* Confetti */
+#cv{position:fixed;inset:0;pointer-events:none;z-index:450}
 
-.q-label {
-  font-size: 12px; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--teal); margin-bottom: 16px;
-}
-.q-inner h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.45rem,3.5vw,2.2rem); line-height: 1.25;
-  margin-bottom: 28px;
-}
-.ta-wrap { position: relative; }
-textarea {
-  width: 100%; min-height: 155px;
-  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.14);
-  border-radius: var(--r); color: var(--white);
-  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.65;
-  padding: 18px 20px; resize: none; outline: none;
-  transition: border-color .25s, background .25s;
-}
-textarea::placeholder { color: rgba(255,255,255,.28); }
-textarea:focus { border-color: var(--teal); background: rgba(255,255,255,.09); }
-.cc {
-  position: absolute; bottom: 10px; right: 14px;
-  font-size: 11px; color: rgba(255,255,255,.28); pointer-events: none;
-}
-.hint {
-  font-size: 12px; color: rgba(255,255,255,.32); margin-top: 9px;
-}
+/* Orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+.o1{width:500px;height:500px;background:rgba(62,207,207,.07);top:-150px;right:-100px}
+.o2{width:400px;height:400px;background:rgba(245,200,66,.06);bottom:-120px;left:-80px}
 
-/* ── Contact screen ─────────────────────────────────── */
-.ct-inner { max-width: 520px; width: 100%; }
-.ct-icon {
-  width: 54px; height: 54px; border-radius: 50%;
-  background: rgba(245,200,66,.13); border: 1px solid rgba(245,200,66,.28);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; margin-bottom: 24px;
-}
-.ct-inner h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.4rem,3.2vw,2rem); line-height: 1.25; margin-bottom: 10px;
-}
-.ct-sub {
-  font-size: 15px; color: rgba(255,255,255,.58); line-height: 1.65; margin-bottom: 30px;
-}
-.field-stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 26px; }
-.field { display: flex; flex-direction: column; gap: 7px; }
-.field label {
-  font-size: 11px; font-weight: 700; letter-spacing: .09em;
-  text-transform: uppercase; color: rgba(255,255,255,.45);
-}
-.field input {
-  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.14);
-  border-radius: var(--r); color: var(--white);
-  font-family: 'Inter', sans-serif; font-size: 16px;
-  padding: 14px 18px; outline: none;
-  transition: border-color .25s, background .25s;
-}
-.field input::placeholder { color: rgba(255,255,255,.28); }
-.field input:focus  { border-color: var(--gold); background: rgba(255,255,255,.09); }
-.field input.err    { border-color: #ff4d6d; }
-
-/* ── Victory ────────────────────────────────────────── */
-.vic-inner { max-width: 540px; text-align: center; }
-.trophy {
-  width: 92px; height: 92px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold) 0%, #ff9f43 100%);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 28px; font-size: 42px;
-  animation: pulse 2.2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(245,200,66,.4); }
-  50%      { box-shadow: 0 0 0 22px rgba(245,200,66,0); }
-}
-.vic-inner h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.7rem,4vw,2.55rem); line-height: 1.2; margin-bottom: 18px;
-}
-.vic-inner p {
-  font-size: 16px; line-height: 1.8;
-  color: rgba(255,255,255,.7); margin-bottom: 34px;
-}
-
-/* ── Loading overlay ────────────────────────────────── */
-#loader {
-  position: fixed; inset: 0; background: var(--navy);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; z-index: 400; transition: opacity .5s;
-}
-#loader.hidden { opacity: 0; pointer-events: none; display: none; }
-.dots { display: flex; }
-.dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--teal); margin: 0 5px;
-  animation: bop .8s ease-in-out infinite;
-}
-.dot:nth-child(2) { animation-delay: .15s; background: var(--gold); }
-.dot:nth-child(3) { animation-delay: .3s; }
-@keyframes bop {
-  0%,100% { transform: translateY(0); opacity:.45; }
-  50%      { transform: translateY(-13px); opacity:1; }
-}
-#loader-msg {
-  font-size: 13px; color: rgba(255,255,255,.35); letter-spacing: .04em;
-}
-
-/* ── Toast ──────────────────────────────────────────── */
-#toast {
-  position: fixed; bottom: 24px; left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: #ff4d6d; color: #fff;
-  padding: 11px 22px; border-radius: 100px;
-  font-size: 14px; font-weight: 500; z-index: 500;
-  transition: transform .35s cubic-bezier(.4,0,.2,1);
-  pointer-events: none; white-space: nowrap; max-width: 90vw;
-}
-#toast.show { transform: translateX(-50%) translateY(0); }
-
-/* ── Confetti ───────────────────────────────────────── */
-#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 450; }
-
-/* ── Decorative orbs ────────────────────────────────── */
-.orb { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
-.o1  { width:500px; height:500px; background:rgba(62,207,207,.07);  top:-150px; right:-100px; }
-.o2  { width:400px; height:400px; background:rgba(245,200,66,.06); bottom:-120px; left:-80px; }
-
-/* ── Mobile tweaks ──────────────────────────────────── */
 @media(max-width:520px){
-  .welcome-inner h1, .q-inner h2, .ct-inner h2 { font-size:1.45rem; }
-  textarea, .field input { font-size:15px; }
-  #lang-switcher { top:auto; bottom:14px; left:50%; transform:translateX(-50%); }
-  .screen { padding-bottom:64px; }
+  .wi h1,.qi h2,.ci h2{font-size:1.45rem}
+  textarea,.fi input{font-size:15px}
+  #lang-sw{top:auto;bottom:14px;left:50%;transform:translateX(-50%)}
+  .screen{padding-bottom:64px}
 }
 @media(prefers-reduced-motion:reduce){
-  *{ transition-duration:.01ms!important; animation-duration:.01ms!important; }
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
 </style>
 </head>
@@ -318,514 +198,482 @@ textarea:focus { border-color: var(--teal); background: rgba(255,255,255,.09); }
 <div class="orb o2"></div>
 
 <!-- Language switcher -->
-<div id="lang-switcher">
-  <button class="lang-btn active" data-lang="en">EN</button>
-  <button class="lang-btn"        data-lang="it">IT</button>
-  <button class="lang-btn"        data-lang="es">ES</button>
-  <button class="lang-btn"        data-lang="de">DE</button>
+<div id="lang-sw">
+  <button class="lb on"  data-l="en">EN</button>
+  <button class="lb"     data-l="it">IT</button>
+  <button class="lb"     data-l="es">ES</button>
+  <button class="lb"     data-l="de">DE</button>
 </div>
 
-<!-- Progress -->
-<div id="progress-wrap"><div id="progress-bar"></div></div>
-<div id="progress-label"></div>
+<!-- Progress bar -->
+<div id="pw"><div id="pb"></div></div>
+<div id="pl"></div>
 
-<!-- Loader -->
+<!-- Loader overlay -->
 <div id="loader">
   <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-  <div id="loader-msg">Loading survey…</div>
+  <div id="lmsg">Loading…</div>
 </div>
 
 <!-- Toast -->
 <div id="toast"></div>
 
-<!-- Confetti canvas -->
-<canvas id="confetti"></canvas>
+<!-- Confetti -->
+<canvas id="cv"></canvas>
 
-<!-- ── App ── -->
+<!-- App -->
 <div id="app">
 
   <!-- Welcome -->
-  <div class="screen active" id="welcome">
-    <div class="welcome-inner">
-      <div class="prize-badge">
+  <div class="screen active" id="s-welcome">
+    <div class="wi">
+      <div class="badge">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span id="w-badge"></span>
+        <span id="el-badge"></span>
       </div>
-      <h1 id="w-heading"></h1>
-      <p  id="w-body"></p>
-      <button class="btn-gold" id="start-btn">
-        <span id="w-start-lbl"></span><span class="arr">→</span>
+      <h1 id="el-h1"></h1>
+      <p  id="el-p"></p>
+      <button class="btn-g" id="btn-start">
+        <span id="el-start"></span><span class="arr">→</span>
       </button>
-      <div class="welcome-meta">
-        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="w-meta1"></span></span>
-        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span id="w-meta2"></span></span>
+      <div class="meta">
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="el-m1"></span></span>
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span id="el-m2"></span></span>
       </div>
     </div>
   </div>
 
-  <!-- Question screens → injected by JS -->
+  <!-- Question screens injected here by JS -->
 
-  <!-- Contact (outside progress count) -->
-  <div class="screen" id="contact-screen">
-    <div class="ct-inner">
-      <div class="ct-icon">🎁</div>
-      <h2 id="ct-heading"></h2>
-      <p  class="ct-sub" id="ct-sub"></p>
-      <div class="field-stack">
-        <div class="field">
-          <label id="ct-lbl-email"></label>
+  <!-- Contact screen (not counted in progress) -->
+  <div class="screen" id="s-contact">
+    <div class="ci">
+      <div class="cico">🎁</div>
+      <h2 id="el-cth"></h2>
+      <p class="csub" id="el-cts"></p>
+      <div class="fs">
+        <div class="fi">
+          <label id="el-lbe"></label>
           <input type="email" id="inp-email" autocomplete="email">
         </div>
-        <div class="field">
-          <label id="ct-lbl-company"></label>
-          <input type="text" id="inp-company" autocomplete="organization">
+        <div class="fi">
+          <label id="el-lbc"></label>
+          <input type="text" id="inp-co" autocomplete="organization">
         </div>
       </div>
-      <div class="row-actions">
-        <button class="btn-ghost" id="ct-back-btn">
+      <div class="row">
+        <button class="btn-bk" id="btn-ctbk">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          <span id="ct-back-lbl"></span>
+          <span id="el-bk2"></span>
         </button>
-        <button class="btn-teal" id="ct-submit-btn">
-          <span class="spin"></span>
-          <span class="lbl" id="ct-submit-lbl"></span>
+        <button class="btn-t" id="btn-sub">
+          <span class="sp"></span>
+          <span class="bl" id="el-sub"></span>
         </button>
       </div>
     </div>
   </div>
 
   <!-- Victory -->
-  <div class="screen" id="victory">
-    <div class="vic-inner">
+  <div class="screen" id="s-victory">
+    <div class="vi">
       <div class="trophy">🏆</div>
-      <h2 id="vic-heading"></h2>
-      <p  id="vic-body"></p>
-      <button class="btn-gold" onclick="window.location.reload()">
+      <h2 id="el-vh"></h2>
+      <p  id="el-vp"></p>
+      <button class="btn-g" onclick="location.reload()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        <span id="vic-restart-lbl"></span>
+        <span id="el-re"></span>
       </button>
     </div>
   </div>
 
-</div>
+</div><!-- #app -->
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  UI TRANSLATIONS  (non-question strings)
-// ═══════════════════════════════════════════════════════════════
-const UI = {
-  en: {
-    badge:          "Limited opportunity",
-    heading:        'Win a custom e-learning module worth <span class="hl">€500</span>',
-    body:           "Complete this short survey for a chance to receive a custom e-learning module worth €500 for your learners.",
-    startBtn:       "Start Survey",
-    meta1:          "Only takes a few minutes",
-    meta2:          "Responses kept private",
-    progressOf:     (c,t)=>`Question ${c} of ${t}`,
-    answerPH:       "Type your answer here…",
-    hint:           `Press <strong style="color:rgba(255,255,255,.62)">Enter ↵</strong> for a new line &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> to continue`,
-    nextBtn:        "Next →",
-    lastBtn:        "Next →",
-    backBtn:        "Back",
-    ctHeading:      "Almost there — claim your entry!",
-    ctSub:          "Leave your details so we can reach you if you win the custom e-learning module worth €500.",
-    ctLblEmail:     "Email address",
-    ctPhEmail:      "you@company.com",
-    ctLblCompany:   "Company name",
-    ctPhCompany:    "Your company",
-    ctSubmitBtn:    "Submit →",
-    vicHeading:     'You\'re <em style="color:var(--gold)">amazing</em> — thank you!',
-    vicBody:        'Your insights are genuinely valuable and help us build better learning experiences. You\'ve been entered into the draw for a custom e-learning module worth <strong style="color:var(--white)">€500</strong> — we\'ll be in touch soon! 🎉',
-    restartBtn:     "Start again",
-    errEmail:       "Please enter a valid email address.",
-    errSubmit:      "Submission failed — please try again.",
-    loading:        "Loading survey…",
+// ─────────────────────────────────────────────────────────────
+//  TRANSLATIONS  (UI strings — not questions)
+// ─────────────────────────────────────────────────────────────
+const TX = {
+  en:{
+    badge:"Limited opportunity",
+    h1:'Win a custom e-learning module worth <span class="hl">€500</span>',
+    p:"Complete this short survey for a chance to receive a custom e-learning module worth €500 for your learners.",
+    start:"Start Survey", m1:"Only takes a few minutes", m2:"Responses kept private",
+    prog:(c,t)=>`Question ${c} of ${t}`,
+    ph:"Type your answer here…",
+    hint:`Press <strong style="color:rgba(255,255,255,.65)">Enter ↵</strong> for a new line &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> to continue`,
+    next:"Next →", last:"Next →", back:"Back",
+    cth:"Almost there — claim your entry!",
+    cts:"Leave your details so we can reach you if you win the custom e-learning module worth €500.",
+    lbe:"Email address", phe:"you@company.com",
+    lbc:"Company name",  phc:"Your company",
+    sub:"Submit →",
+    vh:'You\'re <em style="color:var(--gold)">amazing</em> — thank you!',
+    vp:'Your insights are genuinely valuable and help us build better learning experiences. You\'ve been entered into the draw for a custom e-learning module worth <strong style="color:var(--white)">€500</strong> — we\'ll be in touch soon! 🎉',
+    re:"Start again",
+    errem:"Please enter a valid email address.",
+    errsub:"Submission failed — please try again.",
+    load:"Loading survey…",
   },
-  it: {
-    badge:          "Opportunità limitata",
-    heading:        'Vinci un modulo e-learning personalizzato del valore di <span class="hl">€500</span>',
-    body:           "Compila questo breve sondaggio per avere la possibilità di ricevere un modulo e-learning personalizzato del valore di €500 per i tuoi corsisti.",
-    startBtn:       "Inizia il sondaggio",
-    meta1:          "Solo pochi minuti",
-    meta2:          "Risposte riservate",
-    progressOf:     (c,t)=>`Domanda ${c} di ${t}`,
-    answerPH:       "Scrivi qui la tua risposta…",
-    hint:           `Premi <strong style="color:rgba(255,255,255,.62)">Invio ↵</strong> per andare a capo &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> per continuare`,
-    nextBtn:        "Avanti →",
-    lastBtn:        "Avanti →",
-    backBtn:        "Indietro",
-    ctHeading:      "Quasi fatto — registra la tua partecipazione!",
-    ctSub:          "Lascia i tuoi dati così potremo contattarti se vinci il modulo e-learning personalizzato del valore di €500.",
-    ctLblEmail:     "Indirizzo e-mail",
-    ctPhEmail:      "tu@azienda.com",
-    ctLblCompany:   "Nome azienda",
-    ctPhCompany:    "La tua azienda",
-    ctSubmitBtn:    "Invia →",
-    vicHeading:     'Sei <em style="color:var(--gold)">fantastico/a</em> — grazie!',
-    vicBody:        'Le tue risposte sono molto preziose e ci aiutano a creare esperienze di apprendimento migliori. Sei stato inserito nell\'estrazione per un modulo e-learning del valore di <strong style="color:var(--white)">€500</strong> — ti contatteremo presto! 🎉',
-    restartBtn:     "Ricomincia",
-    errEmail:       "Inserisci un indirizzo e-mail valido.",
-    errSubmit:      "Invio fallito — riprova.",
-    loading:        "Caricamento del sondaggio…",
+  it:{
+    badge:"Opportunità limitata",
+    h1:'Vinci un modulo e-learning personalizzato del valore di <span class="hl">€500</span>',
+    p:"Compila questo breve sondaggio per avere la possibilità di ricevere un modulo e-learning personalizzato del valore di €500 per i tuoi corsisti.",
+    start:"Inizia il sondaggio", m1:"Solo pochi minuti", m2:"Risposte riservate",
+    prog:(c,t)=>`Domanda ${c} di ${t}`,
+    ph:"Scrivi qui la tua risposta…",
+    hint:`Premi <strong style="color:rgba(255,255,255,.65)">Invio ↵</strong> per andare a capo &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> per continuare`,
+    next:"Avanti →", last:"Avanti →", back:"Indietro",
+    cth:"Quasi fatto — registra la tua partecipazione!",
+    cts:"Lascia i tuoi dati così potremo contattarti se vinci il modulo e-learning personalizzato del valore di €500.",
+    lbe:"Indirizzo e-mail", phe:"tu@azienda.com",
+    lbc:"Nome azienda",     phc:"La tua azienda",
+    sub:"Invia →",
+    vh:'Sei <em style="color:var(--gold)">fantastico/a</em> — grazie!',
+    vp:'Le tue risposte sono molto preziose e ci aiutano a creare esperienze di apprendimento migliori. Sei stato inserito nell\'estrazione per un modulo e-learning del valore di <strong style="color:var(--white)">€500</strong> — ti contatteremo presto! 🎉',
+    re:"Ricomincia",
+    errem:"Inserisci un indirizzo e-mail valido.",
+    errsub:"Invio fallito — riprova.",
+    load:"Caricamento del sondaggio…",
   },
-  es: {
-    badge:          "Oportunidad limitada",
-    heading:        'Gana un módulo de e-learning personalizado valorado en <span class="hl">€500</span>',
-    body:           "Completa esta breve encuesta para tener la oportunidad de recibir un módulo de e-learning personalizado valorado en €500 para tus alumnos.",
-    startBtn:       "Comenzar encuesta",
-    meta1:          "Solo unos minutos",
-    meta2:          "Respuestas confidenciales",
-    progressOf:     (c,t)=>`Pregunta ${c} de ${t}`,
-    answerPH:       "Escribe tu respuesta aquí…",
-    hint:           `Pulsa <strong style="color:rgba(255,255,255,.62)">Intro ↵</strong> para nueva línea &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> para continuar`,
-    nextBtn:        "Siguiente →",
-    lastBtn:        "Siguiente →",
-    backBtn:        "Atrás",
-    ctHeading:      "¡Casi listo — confirma tu participación!",
-    ctSub:          "Déjanos tus datos para poder contactarte si ganas el módulo de e-learning personalizado valorado en €500.",
-    ctLblEmail:     "Correo electrónico",
-    ctPhEmail:      "tu@empresa.com",
-    ctLblCompany:   "Nombre de la empresa",
-    ctPhCompany:    "Tu empresa",
-    ctSubmitBtn:    "Enviar →",
-    vicHeading:     '¡Eres <em style="color:var(--gold)">increíble</em> — gracias!',
-    vicBody:        'Tus respuestas son muy valiosas y nos ayudan a crear mejores experiencias de aprendizaje. Has sido inscrito en el sorteo de un módulo de e-learning valorado en <strong style="color:var(--white)">€500</strong> — ¡nos pondremos en contacto pronto! 🎉',
-    restartBtn:     "Empezar de nuevo",
-    errEmail:       "Por favor, introduce un correo electrónico válido.",
-    errSubmit:      "Envío fallido — inténtalo de nuevo.",
-    loading:        "Cargando encuesta…",
+  es:{
+    badge:"Oportunidad limitada",
+    h1:'Gana un módulo de e-learning personalizado valorado en <span class="hl">€500</span>',
+    p:"Completa esta breve encuesta para tener la oportunidad de recibir un módulo de e-learning personalizado valorado en €500 para tus alumnos.",
+    start:"Comenzar encuesta", m1:"Solo unos minutos", m2:"Respuestas confidenciales",
+    prog:(c,t)=>`Pregunta ${c} de ${t}`,
+    ph:"Escribe tu respuesta aquí…",
+    hint:`Pulsa <strong style="color:rgba(255,255,255,.65)">Intro ↵</strong> para nueva línea &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> para continuar`,
+    next:"Siguiente →", last:"Siguiente →", back:"Atrás",
+    cth:"¡Casi listo — confirma tu participación!",
+    cts:"Déjanos tus datos para poder contactarte si ganas el módulo de e-learning personalizado valorado en €500.",
+    lbe:"Correo electrónico", phe:"tu@empresa.com",
+    lbc:"Nombre de la empresa", phc:"Tu empresa",
+    sub:"Enviar →",
+    vh:'¡Eres <em style="color:var(--gold)">increíble</em> — gracias!',
+    vp:'Tus respuestas son muy valiosas y nos ayudan a crear mejores experiencias de aprendizaje. Has sido inscrito en el sorteo de un módulo de e-learning valorado en <strong style="color:var(--white)">€500</strong> — ¡nos pondremos en contacto pronto! 🎉',
+    re:"Empezar de nuevo",
+    errem:"Por favor, introduce un correo electrónico válido.",
+    errsub:"Envío fallido — inténtalo de nuevo.",
+    load:"Cargando encuesta…",
   },
-  de: {
-    badge:          "Begrenzte Möglichkeit",
-    heading:        'Gewinne ein maßgeschneidertes E-Learning-Modul im Wert von <span class="hl">€500</span>',
-    body:           "Nimm an dieser kurzen Umfrage teil und erhalte die Chance, ein maßgeschneidertes E-Learning-Modul im Wert von €500 für deine Lernenden zu gewinnen.",
-    startBtn:       "Umfrage starten",
-    meta1:          "Nur wenige Minuten",
-    meta2:          "Antworten vertraulich",
-    progressOf:     (c,t)=>`Frage ${c} von ${t}`,
-    answerPH:       "Schreibe hier deine Antwort…",
-    hint:           `<strong style="color:rgba(255,255,255,.62)">Eingabe ↵</strong> für neue Zeile &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.62)">Tab</strong> zum Fortfahren`,
-    nextBtn:        "Weiter →",
-    lastBtn:        "Weiter →",
-    backBtn:        "Zurück",
-    ctHeading:      "Fast geschafft — sichere deinen Eintrag!",
-    ctSub:          "Hinterlasse deine Kontaktdaten, damit wir dich erreichen können, falls du das E-Learning-Modul im Wert von €500 gewinnst.",
-    ctLblEmail:     "E-Mail-Adresse",
-    ctPhEmail:      "du@unternehmen.de",
-    ctLblCompany:   "Unternehmensname",
-    ctPhCompany:    "Dein Unternehmen",
-    ctSubmitBtn:    "Absenden →",
-    vicHeading:     'Du bist <em style="color:var(--gold)">großartig</em> — danke!',
-    vicBody:        'Deine Antworten sind äußerst wertvoll und helfen uns, bessere Lernerfahrungen zu gestalten. Du nimmst jetzt an der Verlosung eines E-Learning-Moduls im Wert von <strong style="color:var(--white)">€500</strong> teil — wir melden uns bald! 🎉',
-    restartBtn:     "Neu starten",
-    errEmail:       "Bitte gib eine gültige E-Mail-Adresse ein.",
-    errSubmit:      "Übermittlung fehlgeschlagen — bitte erneut versuchen.",
-    loading:        "Umfrage wird geladen…",
+  de:{
+    badge:"Begrenzte Möglichkeit",
+    h1:'Gewinne ein maßgeschneidertes E-Learning-Modul im Wert von <span class="hl">€500</span>',
+    p:"Nimm an dieser kurzen Umfrage teil und erhalte die Chance, ein maßgeschneidertes E-Learning-Modul im Wert von €500 für deine Lernenden zu gewinnen.",
+    start:"Umfrage starten", m1:"Nur wenige Minuten", m2:"Antworten vertraulich",
+    prog:(c,t)=>`Frage ${c} von ${t}`,
+    ph:"Schreibe hier deine Antwort…",
+    hint:`<strong style="color:rgba(255,255,255,.65)">Eingabe ↵</strong> für neue Zeile &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> zum Fortfahren`,
+    next:"Weiter →", last:"Weiter →", back:"Zurück",
+    cth:"Fast geschafft — sichere deinen Eintrag!",
+    cts:"Hinterlasse deine Kontaktdaten, damit wir dich erreichen können, falls du das E-Learning-Modul im Wert von €500 gewinnst.",
+    lbe:"E-Mail-Adresse",   phe:"du@unternehmen.de",
+    lbc:"Unternehmensname", phc:"Dein Unternehmen",
+    sub:"Absenden →",
+    vh:'Du bist <em style="color:var(--gold)">großartig</em> — danke!',
+    vp:'Deine Antworten sind äußerst wertvoll und helfen uns, bessere Lernerfahrungen zu gestalten. Du nimmst jetzt an der Verlosung eines E-Learning-Moduls im Wert von <strong style="color:var(--white)">€500</strong> teil — wir melden uns bald! 🎉',
+    re:"Neu starten",
+    errem:"Bitte gib eine gültige E-Mail-Adresse ein.",
+    errsub:"Übermittlung fehlgeschlagen — bitte erneut versuchen.",
+    load:"Umfrage wird geladen…",
   }
 };
 
-// ═══════════════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════════════
-let lang       = 'en';
-// questionBank: array of { en, it, es, de } objects — loaded from Sheets
-// fallback if Sheets not configured
-let questionBank = [
-  { en:"What are some topics you most like to provide training on?",           it:"Quali argomenti preferisci utilizzare per la formazione?",                        es:"¿Qué temas te gusta más utilizar para la formación?",                          de:"Zu welchen Themen führst du am liebsten Schulungen durch?" },
-  { en:"What are your biggest challenges when providing training?",             it:"Quali sono le tue maggiori sfide nell'erogare formazione?",                       es:"¿Cuáles son tus mayores desafíos al impartir formación?",                       de:"Was sind deine größten Herausforderungen bei der Durchführung von Schulungen?" },
-  { en:"How do you currently deliver training?",                                it:"Come eroghi attualmente la formazione?",                                          es:"¿Cómo impartes actualmente la formación?",                                     de:"Wie führst du derzeit Schulungen durch?" },
-  { en:"How beneficial do you think e-learning could be for your organization?",it:"Quanto pensi che l'e-learning possa essere utile per la tua organizzazione?",    es:"¿Cuán beneficioso crees que podría ser el e-learning para tu organización?",  de:"Wie nützlich könnte E-Learning deiner Meinung nach für deine Organisation sein?" },
-  { en:"Who would you like to provide training for?",                           it:"Per chi vorresti erogare formazione?",                                            es:"¿Para quién te gustaría impartir formación?",                                  de:"Für wen möchtest du Schulungen anbieten?" }
+// ─────────────────────────────────────────────────────────────
+//  FALLBACK QUESTIONS (used when Sheets not connected)
+// ─────────────────────────────────────────────────────────────
+const FALLBACK = [
+  {en:"What are some topics you most like to provide training on?",
+   it:"Quali sono gli argomenti che preferisci utilizzare per la formazione?",
+   es:"¿Cuáles son los temas que más te gusta utilizar para la formación?",
+   de:"Zu welchen Themen führst du am liebsten Schulungen durch?"},
+  {en:"What are your biggest challenges when providing training?",
+   it:"Quali sono le tue maggiori sfide nell'erogare formazione?",
+   es:"¿Cuáles son tus mayores desafíos a la hora de impartir formación?",
+   de:"Was sind deine größten Herausforderungen bei der Durchführung von Schulungen?"},
+  {en:"How do you currently deliver training?",
+   it:"Come eroghi attualmente la formazione?",
+   es:"¿Cómo impartes actualmente la formación?",
+   de:"Wie führst du derzeit Schulungen durch?"},
+  {en:"How beneficial do you think e-learning could be for your organization?",
+   it:"Quanto ritieni che l'e-learning possa essere utile per la tua organizzazione?",
+   es:"¿En qué medida crees que el e-learning podría ser beneficioso para tu organización?",
+   de:"Für wie nützlich hältst du E-Learning für deine Organisation?"},
+  {en:"Who would you like to provide training for?",
+   it:"Per chi vorresti erogare formazione?",
+   es:"¿Para quién te gustaría impartir formación?",
+   de:"Für wen möchtest du Schulungen anbieten?"}
 ];
 
-let answers  = [];  // parallel to questionBank
-let current  = -1;  // -1=welcome  0..n-1=questions  n=contact
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+let lang  = "en";
+let bank  = FALLBACK.map(q=>({...q})); // copy — will be replaced if Sheets loads
+let ans   = [];
+let cur   = -1;  // -1=welcome  0..n-1=questions  n=contact
 
-// ═══════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────
 //  HELPERS
-// ═══════════════════════════════════════════════════════════════
-const u    = key => UI[lang][key] ?? UI.en[key] ?? key;
-const esc  = s   => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const $    = id  => document.getElementById(id);
-const nQ   = ()  => questionBank.length;
-const qTxt = i   => questionBank[i][lang] || questionBank[i].en || "";
+// ─────────────────────────────────────────────────────────────
+const t   = k  => TX[lang][k] ?? TX.en[k] ?? k;
+const el  = id => document.getElementById(id);
+const nQ  = () => bank.length;
+const qT  = i  => bank[i][lang] || bank[i].en || "";
 
 function toast(msg, ms=4200){
-  const el=$('toast'); el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), ms);
+  const e=el("toast"); e.textContent=msg; e.classList.add("show");
+  setTimeout(()=>e.classList.remove("show"), ms);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  LOAD QUESTIONS FROM SHEETS
-//  Expected sheet "Questions":
-//    Row 1 (header): Question_EN | Question_IT | Question_ES | Question_DE
-//    Row 2+:  one question per row, four language columns
-//  Apps Script returns: { questions: [{en,it,es,de}, …] }
-// ═══════════════════════════════════════════════════════════════
-async function loadQuestions(){
-  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
-  try {
-    // 8-second timeout so loader never hangs forever
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 8000);
-    const res = await fetch(
-      `${APPS_SCRIPT_URL}?action=getQuestions`,
-      { signal: controller.signal, redirect: "follow" }
-    );
-    clearTimeout(timer);
-    const text = await res.text();
-    // Apps Script sometimes wraps in a redirect — strip any HTML wrapper
-    const jsonStart = text.indexOf('{');
-    const jsonEnd   = text.lastIndexOf('}');
-    if(jsonStart === -1) throw new Error("No JSON in response");
-    const data = JSON.parse(text.slice(jsonStart, jsonEnd+1));
-    if(data.questions && data.questions.length) questionBank = data.questions;
-  } catch(e){
-    console.warn("Sheets unavailable — using built-in fallback questions.", e);
-    // fallback already set as default value of questionBank
-  }
+function hideLoader(){
+  const l=el("loader");
+  l.classList.add("gone");
+  setTimeout(()=>l.style.display="none", 450);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  SUBMIT
-// ═══════════════════════════════════════════════════════════════
-async function submitAll(){
-  const email   = $('inp-email').value.trim();
-  const company = $('inp-company').value.trim();
-  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
-    console.log("Demo submit:", { email, company, lang, answers }); return;
-  }
-  // Apps Script doesn't support CORS preflight on POST, so we use no-cors.
-  // The request goes through fine; we just can't read the response body.
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 10000);
-  await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode:   "no-cors",          // ← key fix: avoids CORS preflight error
-    headers:{"Content-Type":"text/plain"}, // text/plain skips preflight
-    signal: controller.signal,
-    body: JSON.stringify({
+// ─────────────────────────────────────────────────────────────
+//  FETCH QUESTIONS FROM SHEETS
+//  Uses a JSONP-style approach via a <script> tag to avoid CORS,
+//  with a 6-second timeout that falls back to FALLBACK quietly.
+// ─────────────────────────────────────────────────────────────
+function loadQuestions(){
+  return new Promise(resolve=>{
+    // If no URL configured, resolve immediately with fallback
+    if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
+      resolve(); return;
+    }
+
+    let done = false;
+    const finish = ()=>{ done=true; resolve(); };
+
+    // Timeout — always fall through after 6s
+    const timer = setTimeout(()=>{
+      if(!done){ console.warn("Sheets timeout — using fallback."); finish(); }
+    }, 6000);
+
+    // Try fetch with redirect:follow (works for Apps Script GET)
+    fetch(APPS_SCRIPT_URL+"?action=getQuestions", {redirect:"follow"})
+      .then(r=>r.text())
+      .then(txt=>{
+        clearTimeout(timer);
+        if(done) return;
+        // Extract JSON — Apps Script may prepend )]}'  or wrap in HTML on redirect
+        const s=txt.indexOf("{"), e=txt.lastIndexOf("}");
+        if(s===-1||e===-1) throw new Error("No JSON");
+        const data=JSON.parse(txt.slice(s,e+1));
+        if(data.questions && data.questions.length) bank=data.questions;
+        finish();
+      })
+      .catch(err=>{
+        clearTimeout(timer);
+        console.warn("Sheets fetch failed — using fallback:", err.message);
+        if(!done) finish();
+      });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  SUBMIT  (no-cors POST — avoids preflight, fire-and-forget)
+// ─────────────────────────────────────────────────────────────
+function submitData(){
+  return new Promise(resolve=>{
+    if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
+      console.log("Demo — answers:", ans); resolve(); return;
+    }
+    const payload = JSON.stringify({
       action:"submitAnswers",
       timestamp: new Date().toISOString(),
-      language: lang, email, company,
-      answers: questionBank.map((q,i)=>({ question: q[lang]||q.en, answer: answers[i]||"" }))
-    })
+      language: lang,
+      email:    el("inp-email").value.trim(),
+      company:  el("inp-co").value.trim(),
+      answers:  bank.map((q,i)=>({question:q[lang]||q.en, answer:ans[i]||""}))
+    });
+    // no-cors: request goes through, we just can't read the response
+    fetch(APPS_SCRIPT_URL, {method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"text/plain"}, body:payload})
+      .finally(()=>resolve());
+    // Also resolve after 5s max so UI never hangs
+    setTimeout(resolve, 5000);
   });
-  clearTimeout(timer);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  BUILD QUESTION DOM  (called once on init, or on language switch)
-//  Language switch: questions are already in DOM — we just
-//  update their text content via refreshQuestionTexts().
-// ═══════════════════════════════════════════════════════════════
-function buildQuestionScreens(){
-  // Remove any existing question screens first
-  document.querySelectorAll('.q-screen').forEach(el=>el.remove());
+// ─────────────────────────────────────────────────────────────
+//  BUILD QUESTION SCREENS  (called once after bank is ready)
+// ─────────────────────────────────────────────────────────────
+function buildScreens(){
+  ans = Array(nQ()).fill("");
+  // Remove any old question screens
+  document.querySelectorAll(".qs").forEach(e=>e.remove());
+  const app     = el("app");
+  const contact = el("s-contact");
 
-  const app     = $('app');
-  const contact = $('contact-screen');
-
-  questionBank.forEach((qObj, i)=>{
-    const div = document.createElement('div');
-    div.className = 'screen q-screen';
-    div.id = `q-${i}`;
-    div.innerHTML=`
-      <div class="q-inner">
-        <div class="q-label" id="qlbl-${i}"></div>
-        <h2 id="qtxt-${i}"></h2>
-        <div class="ta-wrap">
-          <textarea id="ans-${i}" rows="5" maxlength="2000"></textarea>
+  bank.forEach((q,i)=>{
+    const d=document.createElement("div");
+    d.className="screen qs"; d.id=`s-q${i}`;
+    d.innerHTML=`
+      <div class="qi">
+        <div class="ql" id="ql-${i}"></div>
+        <h2 id="qh-${i}"></h2>
+        <div class="taw">
+          <textarea id="ta-${i}" rows="5" maxlength="2000"></textarea>
           <span class="cc" id="cc-${i}">0 / 2000</span>
         </div>
-        <p class="hint" id="hint-${i}"></p>
-        <div class="row-actions">
-          <button class="btn-ghost" onclick="goBack(${i})">
+        <p class="hint" id="hi-${i}"></p>
+        <div class="row">
+          <button class="btn-bk" onclick="goBack(${i})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="qback-${i}"></span>
+            <span id="bk-${i}"></span>
           </button>
-          <button class="btn-teal" id="qnext-${i}" onclick="goNext(${i})">
-            <span class="spin"></span>
-            <span class="lbl" id="qnextlbl-${i}"></span>
+          <button class="btn-t" id="nx-${i}" onclick="goNext(${i})">
+            <span class="sp"></span>
+            <span class="bl" id="nx-lbl-${i}"></span>
           </button>
         </div>
       </div>`;
-    app.insertBefore(div, contact);
+    app.insertBefore(d, contact);
 
-    const ta = $(`ans-${i}`);
-    const cc = $(`cc-${i}`);
-    // Restore any previously typed answer
-    if(answers[i]) ta.value = answers[i];
-    ta.addEventListener('input',()=>{
-      answers[i]=ta.value;
-      cc.textContent=`${ta.value.length} / 2000`;
-    });
-    ta.addEventListener('keydown', e=>{
-      if(e.key==='Tab'){ e.preventDefault(); goNext(i); }
-    });
-  });
-
-  // Initialise answers array length
-  if(answers.length!==questionBank.length) answers=Array(questionBank.length).fill("");
-}
-
-// Update just the text nodes when language switches (no DOM rebuild)
-function refreshQuestionTexts(){
-  const n = nQ();
-  $('q-total').textContent = n;
-  questionBank.forEach((_,i)=>{
-    const lbl = $(`qlbl-${i}`);
-    const txt = $(`qtxt-${i}`);
-    const ta  = $(`ans-${i}`);
-    const ht  = $(`hint-${i}`);
-    const nb  = $(`qnextlbl-${i}`);
-    const bb  = $(`qback-${i}`);
-    if(lbl) lbl.textContent = u('progressOf')(i+1, n);
-    if(txt) txt.textContent = qTxt(i);
-    if(ta)  ta.placeholder  = u('answerPH');
-    if(ht)  ht.innerHTML    = u('hint');
-    if(nb)  nb.textContent  = (i < n-1) ? u('nextBtn') : u('lastBtn');
-    if(bb)  bb.textContent  = u('backBtn');
+    const ta=el(`ta-${i}`), cc=el(`cc-${i}`);
+    ta.addEventListener("input",()=>{ ans[i]=ta.value; cc.textContent=`${ta.value.length} / 2000`; });
+    ta.addEventListener("keydown",e=>{ if(e.key==="Tab"){e.preventDefault();goNext(i);} });
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  APPLY ALL UI TRANSLATIONS
-// ═══════════════════════════════════════════════════════════════
-function applyUI(){
-  $('w-badge').textContent   = u('badge');
-  $('w-heading').innerHTML   = u('heading');
-  $('w-body').textContent    = u('body');
-  $('w-start-lbl').textContent = u('startBtn');
-  $('w-meta1').textContent   = u('meta1');
-  $('w-meta2').textContent   = u('meta2');
+// ─────────────────────────────────────────────────────────────
+//  RENDER TEXT  (call after buildScreens and on every lang switch)
+// ─────────────────────────────────────────────────────────────
+function render(){
+  // Welcome
+  el("el-badge").textContent = t("badge");
+  el("el-h1").innerHTML      = t("h1");
+  el("el-p").textContent     = t("p");
+  el("el-start").textContent = t("start");
+  el("el-m1").textContent    = t("m1");
+  el("el-m2").textContent    = t("m2");
 
-  $('ct-heading').textContent  = u('ctHeading');
-  $('ct-sub').textContent      = u('ctSub');
-  $('ct-lbl-email').textContent= u('ctLblEmail');
-  $('inp-email').placeholder   = u('ctPhEmail');
-  $('ct-lbl-company').textContent = u('ctLblCompany');
-  $('inp-company').placeholder = u('ctPhCompany');
-  $('ct-submit-lbl').textContent = u('ctSubmitBtn');
-  $('ct-back-lbl').textContent   = u('backBtn');
+  // Contact
+  el("el-cth").textContent   = t("cth");
+  el("el-cts").textContent   = t("cts");
+  el("el-lbe").textContent   = t("lbe");
+  el("inp-email").placeholder= t("phe");
+  el("el-lbc").textContent   = t("lbc");
+  el("inp-co").placeholder   = t("phc");
+  el("el-sub").textContent   = t("sub");
+  el("el-bk2").textContent   = t("back");
 
-  $('vic-heading').innerHTML  = u('vicHeading');
-  $('vic-body').innerHTML     = u('vicBody');
-  $('vic-restart-lbl').textContent = u('restartBtn');
+  // Victory
+  el("el-vh").innerHTML      = t("vh");
+  el("el-vp").innerHTML      = t("vp");
+  el("el-re").textContent    = t("re");
 
-  $('loader-msg').textContent = u('loading');
-  $('q-total').textContent    = nQ();
+  // Loader
+  el("lmsg").textContent     = t("load");
 
-  refreshQuestionTexts();
+  // Question screens
+  bank.forEach((_,i)=>{
+    const ql=el(`ql-${i}`); if(ql) ql.textContent = t("prog")(i+1, nQ());
+    const qh=el(`qh-${i}`); if(qh) qh.textContent = qT(i);
+    const ta=el(`ta-${i}`); if(ta) ta.placeholder  = t("ph");
+    const hi=el(`hi-${i}`); if(hi) hi.innerHTML    = t("hint");
+    const nx=el(`nx-lbl-${i}`); if(nx) nx.textContent = i<nQ()-1 ? t("next") : t("last");
+    const bk=el(`bk-${i}`);     if(bk) bk.textContent = t("back");
+  });
+
   updateProgressLabel();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  LANGUAGE SWITCH
-// ═══════════════════════════════════════════════════════════════
-document.querySelectorAll('.lang-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    lang = btn.dataset.lang;
-    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active', b===btn));
-    applyUI();
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────
 //  NAVIGATION
-// ═══════════════════════════════════════════════════════════════
-function showScreen(id){
-  const cur = document.querySelector('.screen.active');
-  if(cur){ cur.classList.remove('active'); cur.classList.add('exit-up');
-    setTimeout(()=>cur.classList.remove('exit-up'),600); }
-  setTimeout(()=>{ const el=$(id); if(el) el.classList.add('active'); },80);
+// ─────────────────────────────────────────────────────────────
+function go(id){
+  const old=document.querySelector(".screen.active");
+  if(old){ old.classList.remove("active"); old.classList.add("exit");
+    setTimeout(()=>old.classList.remove("exit"),600); }
+  setTimeout(()=>{ const n=el(id); if(n) n.classList.add("active"); },80);
 }
 
-function updateProgress(){
-  const wrap = $('progress-wrap');
-  const bar  = $('progress-bar');
-  const lbl  = $('progress-label');
-  const onQ  = current>=0 && current<nQ();
-  if(!onQ){ wrap.classList.remove('visible'); lbl.classList.remove('visible'); return; }
-  wrap.classList.add('visible'); lbl.classList.add('visible');
-  bar.style.width = ((current+1)/nQ()*100)+'%';
-  updateProgressLabel();
+function showProgress(on){
+  el("pw").classList.toggle("show",on);
+  el("pl").classList.toggle("show",on);
 }
 
 function updateProgressLabel(){
-  if(current<0||current>=nQ()) return;
-  $('progress-label').textContent = u('progressOf')(current+1, nQ());
+  if(cur>=0 && cur<nQ()){
+    el("pb").style.width=((cur+1)/nQ()*100)+"%";
+    el("pl").textContent=t("prog")(cur+1,nQ());
+  }
 }
 
-$('start-btn').addEventListener('click',()=>{
-  current=0; showScreen('q-0'); updateProgress();
-  setTimeout(()=>$('ans-0')?.focus(),400);
+// Start button
+el("btn-start").addEventListener("click",()=>{
+  cur=0; go("s-q0"); showProgress(true); updateProgressLabel();
+  setTimeout(()=>el("ta-0")?.focus(),420);
 });
 
 function goBack(i){
-  if(i===0){ current=-1; showScreen('welcome'); updateProgress(); }
-  else { current=i-1; showScreen(`q-${i-1}`); updateProgress();
-    setTimeout(()=>$(`ans-${i-1}`)?.focus(),400); }
+  if(i===0){ cur=-1; go("s-welcome"); showProgress(false); }
+  else { cur=i-1; go(`s-q${cur}`); updateProgressLabel();
+    setTimeout(()=>el(`ta-${cur}`)?.focus(),420); }
 }
 
 function goNext(i){
   if(i<nQ()-1){
-    current=i+1; showScreen(`q-${i+1}`); updateProgress();
-    setTimeout(()=>$(`ans-${i+1}`)?.focus(),400);
+    cur=i+1; go(`s-q${cur}`); updateProgressLabel();
+    setTimeout(()=>el(`ta-${cur}`)?.focus(),420);
   } else {
-    current=nQ(); // contact screen — outside progress
-    showScreen('contact-screen'); updateProgress();
-    setTimeout(()=>$('inp-email')?.focus(),400);
+    cur=nQ(); go("s-contact"); showProgress(false);
+    setTimeout(()=>el("inp-email")?.focus(),420);
   }
 }
 
-$('ct-back-btn').addEventListener('click',()=>{
-  current=nQ()-1; showScreen(`q-${current}`); updateProgress();
+el("btn-ctbk").addEventListener("click",()=>{
+  cur=nQ()-1; go(`s-q${cur}`); showProgress(true); updateProgressLabel();
 });
 
-// ═══════════════════════════════════════════════════════════════
-//  CONTACT SUBMIT
-// ═══════════════════════════════════════════════════════════════
-$('ct-submit-btn').addEventListener('click', async()=>{
-  const emailEl = $('inp-email');
-  emailEl.classList.remove('err');
-  if(!emailEl.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)){
-    emailEl.classList.add('err'); toast(u('errEmail')); emailEl.focus(); return;
+// Submit
+el("btn-sub").addEventListener("click", async()=>{
+  const em=el("inp-email");
+  em.classList.remove("err");
+  if(!em.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){
+    em.classList.add("err"); toast(t("errem")); em.focus(); return;
   }
-  const btn = $('ct-submit-btn');
-  btn.classList.add('loading');
-  try { await submitAll(); }
-  catch(e){ toast(u('errSubmit')); btn.classList.remove('loading'); return; }
-  btn.classList.remove('loading');
-  $('progress-wrap').classList.remove('visible');
-  $('progress-label').classList.remove('visible');
-  showScreen('victory');
-  confetti();
+  const btn=el("btn-sub"); btn.classList.add("busy");
+  try{ await submitData(); }
+  catch(e){ toast(t("errsub")); btn.classList.remove("busy"); return; }
+  btn.classList.remove("busy");
+  showProgress(false); go("s-victory"); launchConfetti();
 });
 
-// ═══════════════════════════════════════════════════════════════
+// Language switch
+document.querySelectorAll(".lb").forEach(b=>{
+  b.addEventListener("click",()=>{
+    lang=b.dataset.l;
+    document.querySelectorAll(".lb").forEach(x=>x.classList.toggle("on",x===b));
+    render();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 //  CONFETTI
-// ═══════════════════════════════════════════════════════════════
-function confetti(){
-  const cv=$('confetti'), cx=cv.getContext('2d');
+// ─────────────────────────────────────────────────────────────
+function launchConfetti(){
+  const cv=el("cv"),cx=cv.getContext("2d");
   cv.width=innerWidth; cv.height=innerHeight;
   const cols=["#F5C842","#3ECFCF","#ff9f43","#fff","#a78bfa","#fb7185","#34d399"];
   const ps=Array.from({length:170},()=>({
     x:Math.random()*cv.width, y:-20-Math.random()*220,
     r:3.5+Math.random()*6, d:1.4+Math.random()*2.8,
     c:cols[~~(Math.random()*cols.length)],
-    ts:.08+Math.random()*.28, a:0,
-    sq:Math.random()>.45
+    ts:.08+Math.random()*.28, a:0, sq:Math.random()>.45
   }));
   let f=0;
   (function draw(){
     cx.clearRect(0,0,cv.width,cv.height);
     ps.forEach(p=>{
-      cx.save(); cx.fillStyle=p.c;
-      cx.globalAlpha=Math.max(0,1-f/215);
+      cx.save(); cx.fillStyle=p.c; cx.globalAlpha=Math.max(0,1-f/215);
       cx.translate(p.x,p.y); cx.rotate(p.a*Math.PI/180);
-      p.sq ? cx.fillRect(-p.r/2,-p.r/2,p.r*2,p.r)
-           : (cx.beginPath(),cx.arc(0,0,p.r/2,0,2*Math.PI),cx.fill());
+      p.sq?cx.fillRect(-p.r/2,-p.r/2,p.r*2,p.r):(cx.beginPath(),cx.arc(0,0,p.r/2,0,2*Math.PI),cx.fill());
       cx.restore();
       p.y+=p.d; p.x+=Math.sin(p.a*.018)*1.3; p.a+=p.ts;
       if(p.y>cv.height){p.y=-20;p.x=Math.random()*cv.width;}
@@ -835,110 +683,76 @@ function confetti(){
   })();
 }
 
-// INIT
+// ─────────────────────────────────────────────────────────────
+//  INIT  — always hides loader even if everything fails
+// ─────────────────────────────────────────────────────────────
 (async()=>{
-  const loader = document.getElementById('loader');
   try {
-    document.getElementById('loader-msg').textContent = u('loading');
     await loadQuestions();
-    buildQuestionScreens();
-    applyUI();
-  } catch(err){
-    console.error('Init error:', err);
-    try { buildQuestionScreens(); applyUI(); } catch(e){}
+    buildScreens();
+    render();
+  } catch(e){
+    console.error("Init error:", e);
+    // Ensure fallback is used and page still works
+    bank = FALLBACK.map(q=>({...q}));
+    try { buildScreens(); render(); } catch(e2){ console.error(e2); }
   } finally {
-    if(loader){
-      loader.style.transition    = 'opacity 0.4s';
-      loader.style.opacity       = '0';
-      loader.style.pointerEvents = 'none';
-      setTimeout(()=>{ loader.style.display='none'; }, 450);
-    }
+    hideLoader();
   }
 })();
 </script>
 
 <!--
 ╔══════════════════════════════════════════════════════════════════╗
-║   GOOGLE APPS SCRIPT — UPDATED VERSION (copy everything below)  ║
+║            GOOGLE APPS SCRIPT  (full updated version)           ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-// ── STEP 1: Replace with your Spreadsheet ID ──────────────────────
-const SS_ID = "YOUR_SPREADSHEET_ID";
+Paste this in Extensions → Apps Script, replace SS_ID, then:
+  Deploy → Manage deployments → ✏️ → Version: New version → Deploy
 
-// ── STEP 2: Deploy as Web App ─────────────────────────────────────
-//   Deploy > New Deployment > Web App
-//   Execute as: Me
-//   Who has access: Anyone
-//   Then paste the /exec URL into the HTML config at the top.
+──────────────────────────────────────────────────────────────────
+const SS_ID = "YOUR_SPREADSHEET_ID_HERE";
 
-// Adds CORS headers so the browser can read the response
-function addCorsHeaders(output) {
-  return output
-    .setHeader("Access-Control-Allow-Origin",  "*")
-    .setHeader("Access-Control-Allow-Methods", "GET, POST")
-    .setHeader("Access-Control-Allow-Headers", "Content-Type, text/plain");
+function addCors(out){
+  return out
+    .setHeader("Access-Control-Allow-Origin","*")
+    .setHeader("Access-Control-Allow-Methods","GET,POST")
+    .setHeader("Access-Control-Allow-Headers","Content-Type,text/plain");
 }
 
-function doGet(e) {
-  if (e.parameter.action === "getQuestions") {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
-    const rows  = sheet.getDataRange().getValues().slice(1); // skip header row
-    const questions = rows
-      .filter(r => r[0] || r[1] || r[2] || r[3])
-      .map(r => ({ en: r[0]||"", it: r[1]||"", es: r[2]||"", de: r[3]||"" }));
-    return addCorsHeaders(
-      ContentService.createTextOutput(JSON.stringify({ questions }))
-        .setMimeType(ContentService.MimeType.JSON)
-    );
+function doGet(e){
+  if(e.parameter.action==="getQuestions"){
+    const sheet=SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
+    const rows=sheet.getDataRange().getValues().slice(1);
+    const questions=rows
+      .filter(r=>r[0]||r[1]||r[2]||r[3])
+      .map(r=>({en:r[0]||"",it:r[1]||"",es:r[2]||"",de:r[3]||""}));
+    return addCors(ContentService.createTextOutput(JSON.stringify({questions}))
+      .setMimeType(ContentService.MimeType.JSON));
   }
-  return addCorsHeaders(
-    ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
-      .setMimeType(ContentService.MimeType.JSON)
-  );
+  return addCors(ContentService.createTextOutput(JSON.stringify({status:"ok"}))
+    .setMimeType(ContentService.MimeType.JSON));
 }
 
-function doPost(e) {
-  // We send Content-Type: text/plain to avoid CORS preflight — parse normally
-  const body = JSON.parse(e.postData.contents);
-  const ss   = SpreadsheetApp.openById(SS_ID);
-
-  let resp = ss.getSheetByName("Responses");
-  if (!resp) {
-    resp = ss.insertSheet("Responses");
-    resp.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
-  }
-
-  if (body.action === "submitAnswers") {
-    body.answers.forEach(a => {
-      resp.appendRow([
-        body.timestamp, body.language,
-        body.email,     body.company,
-        a.question,     a.answer
-      ]);
-    });
-  }
-
-  return addCorsHeaders(
-    ContentService.createTextOutput(JSON.stringify({ status:"ok" }))
-      .setMimeType(ContentService.MimeType.JSON)
-  );
+function doPost(e){
+  const body=JSON.parse(e.postData.contents);
+  const ss=SpreadsheetApp.openById(SS_ID);
+  let r=ss.getSheetByName("Responses");
+  if(!r){r=ss.insertSheet("Responses");
+    r.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);}
+  if(body.action==="submitAnswers")
+    body.answers.forEach(a=>r.appendRow([body.timestamp,body.language,
+      body.email,body.company,a.question,a.answer]));
+  return addCors(ContentService.createTextOutput(JSON.stringify({status:"ok"}))
+    .setMimeType(ContentService.MimeType.JSON));
 }
-
-// IMPORTANT after pasting this new code:
-// Go to Deploy > Manage deployments > click the pencil ✏️ on your existing deployment
-// Change "Version" to "New version" then click Deploy.
-// This ensures the live URL picks up the updated code.
 
 ╔══════════════════════════════════════════════════════════════╗
-║              GOOGLE SHEETS STRUCTURE                         ║
+║  SHEETS "Questions" tab layout                               ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Tab: "Questions"  (exact name, capital Q)                   ║
 ║  A1: Question_EN  B1: Question_IT  C1: Question_ES  D1: Question_DE
-║  A2…: questions in each language, one row per question       ║
+║  A2…: one question per row in each language                  ║
 ║  Add/remove rows freely — page adapts automatically          ║
-║                                                              ║
-║  Tab: "Responses" — auto-created on first submission         ║
-║  Timestamp | Language | Email | Company | Question | Answer  ║
 ╚══════════════════════════════════════════════════════════════╝
 -->
 </body>
