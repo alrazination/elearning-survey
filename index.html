@@ -693,13 +693,64 @@ function launchConfetti(){
     render();
   } catch(e){
     console.error("Init error:", e);
-    // Ensure fallback is used and page still works
     bank = FALLBACK.map(q=>({...q}));
     try { buildScreens(); render(); } catch(e2){ console.error(e2); }
   } finally {
     hideLoader();
   }
+  // Start live-sync after initial load
+  startLiveSync();
 })();
+
+// ─────────────────────────────────────────────────────────────
+//  LIVE SYNC  — polls Sheets every 30s, rebuilds silently
+//  Only updates when user is on the welcome screen so a live
+//  respondent is never interrupted mid-survey.
+// ─────────────────────────────────────────────────────────────
+function startLiveSync(){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
+
+  const INTERVAL = 30000; // 30 seconds
+
+  async function poll(){
+    // Don't disturb someone who has already started the survey
+    if(cur !== -1) return;
+
+    const prevJSON = JSON.stringify(bank);
+    await loadQuestions();
+    const newJSON  = JSON.stringify(bank);
+
+    if(newJSON !== prevJSON){
+      // Questions changed — rebuild screens silently
+      console.log("Sheets updated — refreshing questions.");
+      ans = Array(nQ()).fill("");
+      buildScreens();
+      render();
+      // Flash a subtle indicator in the progress label area so
+      // the developer/admin can see the sync happened
+      const indicator = document.createElement("div");
+      indicator.style.cssText = [
+        "position:fixed","bottom:20px","right:20px","z-index:600",
+        "background:rgba(62,207,207,.18)","border:1px solid var(--teal)",
+        "color:var(--teal)","font-size:11px","font-weight:700",
+        "padding:6px 14px","border-radius:100px","letter-spacing:.06em",
+        "text-transform:uppercase","opacity:1","transition:opacity 1s",
+        "pointer-events:none"
+      ].join(";");
+      indicator.textContent = "✓ Questions updated";
+      document.body.appendChild(indicator);
+      setTimeout(()=>indicator.style.opacity="0", 2500);
+      setTimeout(()=>indicator.remove(), 3600);
+    }
+  }
+
+  // Poll on page visibility change too (user switches back to tab)
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden) poll();
+  });
+
+  setInterval(poll, INTERVAL);
+}
 </script>
 
 <!--
