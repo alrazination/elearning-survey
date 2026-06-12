@@ -438,39 +438,51 @@ function hideLoader(){
 //  Uses a JSONP-style approach via a <script> tag to avoid CORS,
 //  with a 6-second timeout that falls back to FALLBACK quietly.
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  FETCH via JSONP  — bypasses CORS entirely for GET requests.
+//  We inject a <script> tag pointing at the Apps Script URL
+//  with a callback parameter. Apps Script returns
+//  callback({questions:[...]}) which the browser executes.
+//  Falls back to built-in questions after 8 seconds.
+// ─────────────────────────────────────────────────────────────
 function loadQuestions(){
   return new Promise(resolve=>{
-    // If no URL configured, resolve immediately with fallback
     if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
       resolve(); return;
     }
 
     let done = false;
-    const finish = ()=>{ done=true; resolve(); };
+    const cbName = "__sheetsCB_" + Date.now();
 
-    // Timeout — always fall through after 6s
+    const finish = (questions)=>{
+      if(done) return;
+      done = true;
+      if(questions && questions.length) bank = questions;
+      // clean up
+      delete window[cbName];
+      const s = document.getElementById(cbName);
+      if(s) s.remove();
+      resolve();
+    };
+
+    // Timeout fallback
     const timer = setTimeout(()=>{
-      if(!done){ console.warn("Sheets timeout — using fallback."); finish(); }
-    }, 6000);
+      console.warn("Sheets timeout — using built-in questions.");
+      finish(null);
+    }, 8000);
 
-    // Try fetch with redirect:follow (works for Apps Script GET)
-    fetch(APPS_SCRIPT_URL+"?action=getQuestions", {redirect:"follow"})
-      .then(r=>r.text())
-      .then(txt=>{
-        clearTimeout(timer);
-        if(done) return;
-        // Extract JSON — Apps Script may prepend )]}'  or wrap in HTML on redirect
-        const s=txt.indexOf("{"), e=txt.lastIndexOf("}");
-        if(s===-1||e===-1) throw new Error("No JSON");
-        const data=JSON.parse(txt.slice(s,e+1));
-        if(data.questions && data.questions.length) bank=data.questions;
-        finish();
-      })
-      .catch(err=>{
-        clearTimeout(timer);
-        console.warn("Sheets fetch failed — using fallback:", err.message);
-        if(!done) finish();
-      });
+    // JSONP callback — Apps Script will call this
+    window[cbName] = (data)=>{
+      clearTimeout(timer);
+      finish(data && data.questions ? data.questions : null);
+    };
+
+    // Inject script tag
+    const script = document.createElement("script");
+    script.id  = cbName;
+    script.src = APPS_SCRIPT_URL + "?action=getQuestions&callback=" + cbName;
+    script.onerror = ()=>{ clearTimeout(timer); console.warn("JSONP script error — using built-in questions."); finish(null); };
+    document.head.appendChild(script);
   });
 }
 
@@ -762,40 +774,52 @@ Paste this in Extensions → Apps Script, replace SS_ID, then:
   Deploy → Manage deployments → ✏️ → Version: New version → Deploy
 
 ──────────────────────────────────────────────────────────────────
+// ── REPLACE YOUR_SPREADSHEET_ID_HERE with your real Spreadsheet ID ──
 const SS_ID = "YOUR_SPREADSHEET_ID_HERE";
 
-function addCors(out){
-  return out
-    .setHeader("Access-Control-Allow-Origin","*")
-    .setHeader("Access-Control-Allow-Methods","GET,POST")
-    .setHeader("Access-Control-Allow-Headers","Content-Type,text/plain");
-}
-
-function doGet(e){
-  if(e.parameter.action==="getQuestions"){
-    const sheet=SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
-    const rows=sheet.getDataRange().getValues().slice(1);
-    const questions=rows
-      .filter(r=>r[0]||r[1]||r[2]||r[3])
-      .map(r=>({en:r[0]||"",it:r[1]||"",es:r[2]||"",de:r[3]||""}));
-    return addCors(ContentService.createTextOutput(JSON.stringify({questions}))
-      .setMimeType(ContentService.MimeType.JSON));
+// doGet handles both regular fetch AND JSONP (callback= param)
+function doGet(e) {
+  var questions = [];
+  var sheet = SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
+  var rows  = sheet.getDataRange().getValues();
+  rows.shift(); // skip header row
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r[0] || r[1] || r[2] || r[3]) {
+      questions.push({ en: r[0]||"", it: r[1]||"", es: r[2]||"", de: r[3]||"" });
+    }
   }
-  return addCors(ContentService.createTextOutput(JSON.stringify({status:"ok"}))
-    .setMimeType(ContentService.MimeType.JSON));
+
+  var json = JSON.stringify({ questions: questions });
+
+  // JSONP support — if ?callback=xxx is present, wrap in callback(...)
+  var cb = (e && e.parameter && e.parameter.callback) ? e.parameter.callback : null;
+  if (cb) {
+    // Validate callback name (letters, digits, underscores only — security)
+    cb = cb.replace(/[^a-zA-Z0-9_]/g, "");
+    json = cb + "(" + json + ")";
+  }
+
+  return ContentService.createTextOutput(json)
+    .setMimeType(cb ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
 }
 
-function doPost(e){
-  const body=JSON.parse(e.postData.contents);
-  const ss=SpreadsheetApp.openById(SS_ID);
-  let r=ss.getSheetByName("Responses");
-  if(!r){r=ss.insertSheet("Responses");
-    r.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);}
-  if(body.action==="submitAnswers")
-    body.answers.forEach(a=>r.appendRow([body.timestamp,body.language,
-      body.email,body.company,a.question,a.answer]));
-  return addCors(ContentService.createTextOutput(JSON.stringify({status:"ok"}))
-    .setMimeType(ContentService.MimeType.JSON));
+function doPost(e) {
+  var body = JSON.parse(e.postData.contents);
+  var ss   = SpreadsheetApp.openById(SS_ID);
+  var resp = ss.getSheetByName("Responses");
+  if (!resp) {
+    resp = ss.insertSheet("Responses");
+    resp.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
+  }
+  if (body.action === "submitAnswers") {
+    for (var i = 0; i < body.answers.length; i++) {
+      var a = body.answers[i];
+      resp.appendRow([body.timestamp, body.language, body.email, body.company, a.question, a.answer]);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 ╔══════════════════════════════════════════════════════════════╗
