@@ -6,11 +6,76 @@
 <title>Win a Custom E-Learning Module Worth €500</title>
 
 <script>
-  /* ── ONLY LINE YOU NEED TO EDIT ───────────────────────────────
-     Paste your Apps Script /exec URL below.
-     Leave as-is to run with built-in fallback questions.
-  ─────────────────────────────────────────────────────────────── */
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby30Wjb4PdA9qhT4p8C0byZAxT7T_-2jZUS_-py6vRvLi0J_Y6xp45fy39gPD-rzDfGSQ/exec";
+/* ════════════════════════════════════════════════════════════════════
+   ███  YOUR SURVEY CONFIG — EDIT EVERYTHING IN THIS BLOCK  ███
+   ════════════════════════════════════════════════════════════════════
+
+   STEP 1 ── Which languages do you want to show?
+             Comment out any language you don't need with //
+             Order here = order of buttons on screen
+   ──────────────────────────────────────────────────────────────── */
+const ACTIVE_LANGS = [
+  { code: "en", label: "EN" },
+  { code: "it", label: "IT" },
+  { code: "es", label: "ES" },
+  // { code: "de", label: "DE" },   // ← remove the // to enable German
+];
+
+/* ────────────────────────────────────────────────────────────────
+   STEP 2 ── Your questions.
+             Add as many objects as you like — one per question.
+             Each object needs one key per active language code.
+             If a translation is missing, English is used as fallback.
+   ──────────────────────────────────────────────────────────────── */
+const QUESTIONS = [
+  {
+    en: "What are some topics you most like to provide training on?",
+    it: "Quali sono gli argomenti che preferisci utilizzare per la formazione?",
+    es: "¿Cuáles son los temas que más te gusta utilizar para la formación?",
+    de: "Zu welchen Themen führst du am liebsten Schulungen durch?",
+  },
+  {
+    en: "What are your biggest challenges when providing training?",
+    it: "Quali sono le tue maggiori sfide nell'erogare formazione?",
+    es: "¿Cuáles son tus mayores desafíos a la hora de impartir formación?",
+    de: "Was sind deine größten Herausforderungen bei der Durchführung von Schulungen?",
+  },
+  {
+    en: "How do you currently deliver training?",
+    it: "Come eroghi attualmente la formazione?",
+    es: "¿Cómo impartes actualmente la formación?",
+    de: "Wie führst du derzeit Schulungen durch?",
+  },
+  {
+    en: "How beneficial do you think e-learning could be for your organization?",
+    it: "Quanto ritieni che l'e-learning possa essere utile per la tua organizzazione?",
+    es: "¿En qué medida crees que el e-learning podría ser beneficioso para tu organización?",
+    de: "Für wie nützlich hältst du E-Learning für deine Organisation?",
+  },
+  {
+    en: "Who would you like to provide training for?",
+    it: "Per chi vorresti erogare formazione?",
+    es: "¿Para quién te gustaría impartir formación?",
+    de: "Für wen möchtest du Schulungen anbieten?",
+  },
+  // ── Add more questions below this line ──────────────────────────
+  // {
+  //   en: "Your new question in English?",
+  //   it: "La tua nuova domanda in italiano?",
+  //   es: "¿Tu nueva pregunta en español?",
+  //   de: "Deine neue Frage auf Deutsch?",
+  // },
+];
+
+/* ────────────────────────────────────────────────────────────────
+   STEP 3 ── Google Apps Script URL (for saving answers to Sheets).
+             Leave as-is if you just want to test the survey.
+   ──────────────────────────────────────────────────────────────── */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby30Wjb4PdA9qhT4p8C0byZAxT7T_-2jZUS_-py6vRvLi0J_Y6xp45fy39gPD-rzDfGSQ/exec";
+
+/* ════════════════════════════════════════════════════════════════════
+   ███  END OF CONFIG — do not edit below this line  ███
+   ════════════════════════════════════════════════════════════════════ */
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,32 +84,29 @@
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --navy:#0F1B35;--gold:#F5C842;--gold2:#e6b730;
-  --teal:#3ECFCF;--white:#fff;--muted:rgba(255,255,255,.55);--r:16px;
-}
+:root{--navy:#0F1B35;--gold:#F5C842;--gold2:#e6b730;--teal:#3ECFCF;--white:#fff;--r:16px}
 html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);overflow:hidden}
 
-/* Lang switcher */
-#lang-sw{position:fixed;top:18px;left:20px;z-index:300;display:flex;gap:4px}
+/* lang switcher */
+#lsw{position:fixed;top:18px;left:20px;z-index:300;display:flex;gap:4px}
 .lb{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);
-  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  padding:5px 9px;border-radius:8px;cursor:pointer;transition:all .2s}
-.lb:hover{color:var(--white);border-color:rgba(255,255,255,.3)}
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:5px 9px;border-radius:8px;cursor:pointer;transition:all .2s}
+.lb:hover{color:#fff;border-color:rgba(255,255,255,.3)}
 .lb.on{background:rgba(62,207,207,.18);border-color:var(--teal);color:var(--teal)}
 
-/* Progress */
+/* progress */
 #pw{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.08);
   z-index:200;opacity:0;transition:opacity .4s;pointer-events:none}
 #pw.show{opacity:1}
 #pb{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--gold));
   transition:width .55s cubic-bezier(.4,0,.2,1);border-radius:0 4px 4px 0}
 #pl{position:fixed;top:14px;right:20px;z-index:201;font-size:11px;font-weight:600;
-  letter-spacing:.08em;color:var(--muted);opacity:0;transition:opacity .4s;
+  letter-spacing:.08em;color:rgba(255,255,255,.5);opacity:0;transition:opacity .4s;
   text-transform:uppercase;pointer-events:none}
 #pl.show{opacity:1}
 
-/* Screens */
+/* screens */
 #app{position:relative;width:100%;height:100%;overflow:hidden}
 .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   padding:60px 24px 40px;opacity:0;transform:translateY(60px);
@@ -53,7 +115,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);colo
 .screen.active{opacity:1;transform:translateY(0);pointer-events:all}
 .screen.exit{opacity:0;transform:translateY(-60px)}
 
-/* Welcome */
+/* welcome */
 .wi{max-width:640px;text-align:center}
 .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(245,200,66,.12);
   border:1px solid rgba(245,200,66,.3);border-radius:100px;padding:8px 18px;
@@ -69,7 +131,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);colo
   display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
 .meta span{display:flex;align-items:center;gap:5px}
 
-/* Buttons */
+/* buttons */
 .btn-g{display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:var(--navy);
   font-family:'Inter',sans-serif;font-weight:700;font-size:16px;padding:16px 40px;
   border-radius:100px;border:none;cursor:pointer;
@@ -101,7 +163,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);colo
 .btn-bk:hover{color:rgba(255,255,255,.85)}
 .row{display:flex;align-items:center;justify-content:space-between;margin-top:22px}
 
-/* Question */
+/* question */
 .qi{max-width:680px;width:100%}
 .ql{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--teal);margin-bottom:16px}
@@ -111,15 +173,14 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--navy);colo
 textarea{width:100%;min-height:155px;background:rgba(255,255,255,.06);
   border:1.5px solid rgba(255,255,255,.14);border-radius:var(--r);color:var(--white);
   font-family:'Inter',sans-serif;font-size:16px;line-height:1.65;
-  padding:18px 20px;resize:none;outline:none;
-  transition:border-color .25s,background .25s}
+  padding:18px 20px;resize:none;outline:none;transition:border-color .25s,background .25s}
 textarea::placeholder{color:rgba(255,255,255,.28)}
 textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
 .cc{position:absolute;bottom:10px;right:14px;font-size:11px;
   color:rgba(255,255,255,.28);pointer-events:none}
 .hint{font-size:12px;color:rgba(255,255,255,.32);margin-top:9px}
 
-/* Contact */
+/* contact */
 .ci{max-width:520px;width:100%}
 .cico{width:54px;height:54px;border-radius:50%;background:rgba(245,200,66,.13);
   border:1px solid rgba(245,200,66,.28);display:flex;align-items:center;
@@ -138,13 +199,12 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
 .fi input:focus{border-color:var(--gold);background:rgba(255,255,255,.09)}
 .fi input.err{border-color:#ff4d6d}
 
-/* Victory */
+/* victory */
 .vi{max-width:540px;text-align:center}
 .trophy{width:92px;height:92px;border-radius:50%;
   background:linear-gradient(135deg,var(--gold) 0%,#ff9f43 100%);
   display:flex;align-items:center;justify-content:center;
-  margin:0 auto 28px;font-size:42px;
-  animation:pglow 2.2s ease-in-out infinite}
+  margin:0 auto 28px;font-size:42px;animation:pglow 2.2s ease-in-out infinite}
 @keyframes pglow{
   0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.4)}
   50%{box-shadow:0 0 0 22px rgba(245,200,66,0)}}
@@ -152,31 +212,17 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
   line-height:1.2;margin-bottom:18px}
 .vi p{font-size:16px;line-height:1.8;color:rgba(255,255,255,.7);margin-bottom:34px}
 
-/* Loader */
-#loader{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:18px;z-index:400;
-  transition:opacity .4s}
-#loader.gone{opacity:0;pointer-events:none}
-.dots{display:flex}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--teal);margin:0 5px;
-  animation:bop .8s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:.15s;background:var(--gold)}
-.dot:nth-child(3){animation-delay:.3s}
-@keyframes bop{0%,100%{transform:translateY(0);opacity:.45}50%{transform:translateY(-13px);opacity:1}}
-#lmsg{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:.04em}
-
-/* Toast */
+/* toast */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
   background:#ff4d6d;color:#fff;padding:11px 22px;border-radius:100px;
   font-size:14px;font-weight:500;z-index:500;
-  transition:transform .35s cubic-bezier(.4,0,.2,1);
-  pointer-events:none;white-space:nowrap;max-width:90vw}
+  transition:transform .35s cubic-bezier(.4,0,.2,1);pointer-events:none}
 #toast.show{transform:translateX(-50%) translateY(0)}
 
-/* Confetti */
+/* confetti */
 #cv{position:fixed;inset:0;pointer-events:none;z-index:450}
 
-/* Orbs */
+/* orbs */
 .orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
 .o1{width:500px;height:500px;background:rgba(62,207,207,.07);top:-150px;right:-100px}
 .o2{width:400px;height:400px;background:rgba(245,200,66,.06);bottom:-120px;left:-80px}
@@ -184,7 +230,7 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
 @media(max-width:520px){
   .wi h1,.qi h2,.ci h2{font-size:1.45rem}
   textarea,.fi input{font-size:15px}
-  #lang-sw{top:auto;bottom:14px;left:50%;transform:translateX(-50%)}
+  #lsw{top:auto;bottom:14px;left:50%;transform:translateX(-50%)}
   .screen{padding-bottom:64px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -197,23 +243,12 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
 <div class="orb o1"></div>
 <div class="orb o2"></div>
 
-<!-- Language switcher -->
-<div id="lang-sw">
-  <button class="lb on"  data-l="en">EN</button>
-  <button class="lb"     data-l="it">IT</button>
-  <button class="lb"     data-l="es">ES</button>
-  <button class="lb"     data-l="de">DE</button>
-</div>
+<!-- Language switcher — built by JS from ACTIVE_LANGS -->
+<div id="lsw"></div>
 
-<!-- Progress bar -->
+<!-- Progress -->
 <div id="pw"><div id="pb"></div></div>
 <div id="pl"></div>
-
-<!-- Loader overlay -->
-<div id="loader">
-  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-  <div id="lmsg">Loading…</div>
-</div>
 
 <!-- Toast -->
 <div id="toast"></div>
@@ -243,9 +278,9 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
     </div>
   </div>
 
-  <!-- Question screens injected here by JS -->
+  <!-- Question screens injected by JS -->
 
-  <!-- Contact screen (not counted in progress) -->
+  <!-- Contact (outside progress) -->
   <div class="screen" id="s-contact">
     <div class="ci">
       <div class="cico">🎁</div>
@@ -287,548 +322,328 @@ textarea:focus{border-color:var(--teal);background:rgba(255,255,255,.09)}
     </div>
   </div>
 
-</div><!-- #app -->
+</div>
 
 <script>
-// ─────────────────────────────────────────────────────────────
-//  TRANSLATIONS  (UI strings — not questions)
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  UI TRANSLATIONS (button labels, headings — not questions)
+//  To add a new language here, add its code to ACTIVE_LANGS
+//  above AND add a matching key block below.
+// ══════════════════════════════════════════════════════════════
 const TX = {
   en:{
     badge:"Limited opportunity",
     h1:'Win a custom e-learning module worth <span class="hl">€500</span>',
     p:"Complete this short survey for a chance to receive a custom e-learning module worth €500 for your learners.",
-    start:"Start Survey", m1:"Only takes a few minutes", m2:"Responses kept private",
+    start:"Start Survey",m1:"Only takes a few minutes",m2:"Responses kept private",
     prog:(c,t)=>`Question ${c} of ${t}`,
     ph:"Type your answer here…",
-    hint:`Press <strong style="color:rgba(255,255,255,.65)">Enter ↵</strong> for a new line &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> to continue`,
-    next:"Next →", last:"Next →", back:"Back",
+    hint:`Press <strong style="color:rgba(255,255,255,.65)">Enter ↵</strong> for a new line · <strong style="color:rgba(255,255,255,.65)">Tab</strong> to continue`,
+    next:"Next →",back:"Back",
     cth:"Almost there — claim your entry!",
-    cts:"Leave your details so we can reach you if you win the custom e-learning module worth €500.",
-    lbe:"Email address", phe:"you@company.com",
-    lbc:"Company name",  phc:"Your company",
+    cts:"Leave your details so we can reach you if you win the e-learning module worth €500.",
+    lbe:"Email address",phe:"you@company.com",
+    lbc:"Company name",phc:"Your company",
     sub:"Submit →",
     vh:'You\'re <em style="color:var(--gold)">amazing</em> — thank you!',
-    vp:'Your insights are genuinely valuable and help us build better learning experiences. You\'ve been entered into the draw for a custom e-learning module worth <strong style="color:var(--white)">€500</strong> — we\'ll be in touch soon! 🎉',
-    re:"Start again",
-    errem:"Please enter a valid email address.",
-    errsub:"Submission failed — please try again.",
-    load:"Loading survey…",
+    vp:'Your insights are genuinely valuable. You\'ve been entered into the draw for a custom e-learning module worth <strong style="color:#fff">€500</strong> — we\'ll be in touch soon! 🎉',
+    re:"Start again",errem:"Please enter a valid email address.",errsub:"Submission failed — try again.",
   },
   it:{
     badge:"Opportunità limitata",
-    h1:'Vinci un modulo e-learning personalizzato del valore di <span class="hl">€500</span>',
-    p:"Compila questo breve sondaggio per avere la possibilità di ricevere un modulo e-learning personalizzato del valore di €500 per i tuoi corsisti.",
-    start:"Inizia il sondaggio", m1:"Solo pochi minuti", m2:"Risposte riservate",
+    h1:'Vinci un modulo e-learning del valore di <span class="hl">€500</span>',
+    p:"Compila questo breve sondaggio per avere la possibilità di ricevere un modulo e-learning personalizzato del valore di €500.",
+    start:"Inizia il sondaggio",m1:"Solo pochi minuti",m2:"Risposte riservate",
     prog:(c,t)=>`Domanda ${c} di ${t}`,
     ph:"Scrivi qui la tua risposta…",
-    hint:`Premi <strong style="color:rgba(255,255,255,.65)">Invio ↵</strong> per andare a capo &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> per continuare`,
-    next:"Avanti →", last:"Avanti →", back:"Indietro",
+    hint:`Premi <strong style="color:rgba(255,255,255,.65)">Invio ↵</strong> per andare a capo · <strong style="color:rgba(255,255,255,.65)">Tab</strong> per continuare`,
+    next:"Avanti →",back:"Indietro",
     cth:"Quasi fatto — registra la tua partecipazione!",
-    cts:"Lascia i tuoi dati così potremo contattarti se vinci il modulo e-learning personalizzato del valore di €500.",
-    lbe:"Indirizzo e-mail", phe:"tu@azienda.com",
-    lbc:"Nome azienda",     phc:"La tua azienda",
+    cts:"Lascia i tuoi dati così potremo contattarti se vinci il modulo e-learning del valore di €500.",
+    lbe:"Indirizzo e-mail",phe:"tu@azienda.com",
+    lbc:"Nome azienda",phc:"La tua azienda",
     sub:"Invia →",
     vh:'Sei <em style="color:var(--gold)">fantastico/a</em> — grazie!',
-    vp:'Le tue risposte sono molto preziose e ci aiutano a creare esperienze di apprendimento migliori. Sei stato inserito nell\'estrazione per un modulo e-learning del valore di <strong style="color:var(--white)">€500</strong> — ti contatteremo presto! 🎉',
-    re:"Ricomincia",
-    errem:"Inserisci un indirizzo e-mail valido.",
-    errsub:"Invio fallito — riprova.",
-    load:"Caricamento del sondaggio…",
+    vp:'Le tue risposte sono molto preziose. Sei stato inserito nell\'estrazione per un modulo e-learning del valore di <strong style="color:#fff">€500</strong> — ti contatteremo presto! 🎉',
+    re:"Ricomincia",errem:"Inserisci un indirizzo e-mail valido.",errsub:"Invio fallito — riprova.",
   },
   es:{
     badge:"Oportunidad limitada",
-    h1:'Gana un módulo de e-learning personalizado valorado en <span class="hl">€500</span>',
-    p:"Completa esta breve encuesta para tener la oportunidad de recibir un módulo de e-learning personalizado valorado en €500 para tus alumnos.",
-    start:"Comenzar encuesta", m1:"Solo unos minutos", m2:"Respuestas confidenciales",
+    h1:'Gana un módulo de e-learning valorado en <span class="hl">€500</span>',
+    p:"Completa esta breve encuesta para tener la oportunidad de recibir un módulo de e-learning personalizado valorado en €500.",
+    start:"Comenzar encuesta",m1:"Solo unos minutos",m2:"Respuestas confidenciales",
     prog:(c,t)=>`Pregunta ${c} de ${t}`,
     ph:"Escribe tu respuesta aquí…",
-    hint:`Pulsa <strong style="color:rgba(255,255,255,.65)">Intro ↵</strong> para nueva línea &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> para continuar`,
-    next:"Siguiente →", last:"Siguiente →", back:"Atrás",
+    hint:`Pulsa <strong style="color:rgba(255,255,255,.65)">Intro ↵</strong> para nueva línea · <strong style="color:rgba(255,255,255,.65)">Tab</strong> para continuar`,
+    next:"Siguiente →",back:"Atrás",
     cth:"¡Casi listo — confirma tu participación!",
-    cts:"Déjanos tus datos para poder contactarte si ganas el módulo de e-learning personalizado valorado en €500.",
-    lbe:"Correo electrónico", phe:"tu@empresa.com",
-    lbc:"Nombre de la empresa", phc:"Tu empresa",
+    cts:"Déjanos tus datos para contactarte si ganas el módulo de e-learning valorado en €500.",
+    lbe:"Correo electrónico",phe:"tu@empresa.com",
+    lbc:"Nombre de la empresa",phc:"Tu empresa",
     sub:"Enviar →",
     vh:'¡Eres <em style="color:var(--gold)">increíble</em> — gracias!',
-    vp:'Tus respuestas son muy valiosas y nos ayudan a crear mejores experiencias de aprendizaje. Has sido inscrito en el sorteo de un módulo de e-learning valorado en <strong style="color:var(--white)">€500</strong> — ¡nos pondremos en contacto pronto! 🎉',
-    re:"Empezar de nuevo",
-    errem:"Por favor, introduce un correo electrónico válido.",
-    errsub:"Envío fallido — inténtalo de nuevo.",
-    load:"Cargando encuesta…",
+    vp:'Tus respuestas son muy valiosas. Has sido inscrito en el sorteo de un módulo de e-learning valorado en <strong style="color:#fff">€500</strong> — ¡nos pondremos en contacto pronto! 🎉',
+    re:"Empezar de nuevo",errem:"Introduce un correo electrónico válido.",errsub:"Envío fallido — inténtalo.",
   },
   de:{
     badge:"Begrenzte Möglichkeit",
-    h1:'Gewinne ein maßgeschneidertes E-Learning-Modul im Wert von <span class="hl">€500</span>',
-    p:"Nimm an dieser kurzen Umfrage teil und erhalte die Chance, ein maßgeschneidertes E-Learning-Modul im Wert von €500 für deine Lernenden zu gewinnen.",
-    start:"Umfrage starten", m1:"Nur wenige Minuten", m2:"Antworten vertraulich",
+    h1:'Gewinne ein E-Learning-Modul im Wert von <span class="hl">€500</span>',
+    p:"Nimm an dieser kurzen Umfrage teil für die Chance, ein maßgeschneidertes E-Learning-Modul im Wert von €500 zu gewinnen.",
+    start:"Umfrage starten",m1:"Nur wenige Minuten",m2:"Antworten vertraulich",
     prog:(c,t)=>`Frage ${c} von ${t}`,
-    ph:"Schreibe hier deine Antwort…",
-    hint:`<strong style="color:rgba(255,255,255,.65)">Eingabe ↵</strong> für neue Zeile &nbsp;·&nbsp; <strong style="color:rgba(255,255,255,.65)">Tab</strong> zum Fortfahren`,
-    next:"Weiter →", last:"Weiter →", back:"Zurück",
+    ph:"Schreibe deine Antwort hier…",
+    hint:`<strong style="color:rgba(255,255,255,.65)">Eingabe ↵</strong> für neue Zeile · <strong style="color:rgba(255,255,255,.65)">Tab</strong> zum Fortfahren`,
+    next:"Weiter →",back:"Zurück",
     cth:"Fast geschafft — sichere deinen Eintrag!",
-    cts:"Hinterlasse deine Kontaktdaten, damit wir dich erreichen können, falls du das E-Learning-Modul im Wert von €500 gewinnst.",
-    lbe:"E-Mail-Adresse",   phe:"du@unternehmen.de",
-    lbc:"Unternehmensname", phc:"Dein Unternehmen",
+    cts:"Hinterlasse deine Daten, damit wir dich kontaktieren können, falls du das E-Learning-Modul im Wert von €500 gewinnst.",
+    lbe:"E-Mail-Adresse",phe:"du@firma.de",
+    lbc:"Unternehmensname",phc:"Dein Unternehmen",
     sub:"Absenden →",
     vh:'Du bist <em style="color:var(--gold)">großartig</em> — danke!',
-    vp:'Deine Antworten sind äußerst wertvoll und helfen uns, bessere Lernerfahrungen zu gestalten. Du nimmst jetzt an der Verlosung eines E-Learning-Moduls im Wert von <strong style="color:var(--white)">€500</strong> teil — wir melden uns bald! 🎉',
-    re:"Neu starten",
-    errem:"Bitte gib eine gültige E-Mail-Adresse ein.",
-    errsub:"Übermittlung fehlgeschlagen — bitte erneut versuchen.",
-    load:"Umfrage wird geladen…",
-  }
+    vp:'Deine Antworten helfen uns sehr. Du nimmst an der Verlosung eines E-Learning-Moduls im Wert von <strong style="color:#fff">€500</strong> teil — wir melden uns bald! 🎉',
+    re:"Neu starten",errem:"Bitte gib eine gültige E-Mail-Adresse ein.",errsub:"Fehler — bitte erneut versuchen.",
+  },
 };
 
-// ─────────────────────────────────────────────────────────────
-//  FALLBACK QUESTIONS (used when Sheets not connected)
-// ─────────────────────────────────────────────────────────────
-const FALLBACK = [
-  {en:"What are some topics you most likely to provide training on?",
-   it:"Quali sono gli argomenti che preferisci utilizzare per la formazione?",
-   es:"¿Cuáles son los temas que más te gusta utilizar para la formación?",
-   de:"Zu welchen Themen führst du am liebsten Schulungen durch?"},
-  {en:"What are your biggest challenges when providing training?",
-   it:"Quali sono le tue maggiori sfide nell'erogare formazione?",
-   es:"¿Cuáles son tus mayores desafíos a la hora de impartir formación?",
-   de:"Was sind deine größten Herausforderungen bei der Durchführung von Schulungen?"},
-  {en:"How do you currently deliver training?",
-   it:"Come eroghi attualmente la formazione?",
-   es:"¿Cómo impartes actualmente la formación?",
-   de:"Wie führst du derzeit Schulungen durch?"},
-  {en:"How beneficial do you think e-learning could be for your organization?",
-   it:"Quanto ritieni che l'e-learning possa essere utile per la tua organizzazione?",
-   es:"¿En qué medida crees que el e-learning podría ser beneficioso para tu organización?",
-   de:"Für wie nützlich hältst du E-Learning für deine Organisation?"},
-  {en:"Who would you like to provide training for?",
-   it:"Per chi vorresti erogare formazione?",
-   es:"¿Para quién te gustaría impartir formación?",
-   de:"Für wen möchtest du Schulungen anbieten?"}
-];
+// ══════════════════════════════════════════════════════════════
+//  RUNTIME STATE  (don't edit)
+// ══════════════════════════════════════════════════════════════
+let lang = ACTIVE_LANGS[0].code;   // default = first active language
+let bank = QUESTIONS;               // questions come from config block
+let ans  = [];
+let cur  = -1;
 
-// ─────────────────────────────────────────────────────────────
-//  STATE
-// ─────────────────────────────────────────────────────────────
-let lang  = "en";
-let bank  = FALLBACK.map(q=>({...q})); // copy — will be replaced if Sheets loads
-let ans   = [];
-let cur   = -1;  // -1=welcome  0..n-1=questions  n=contact
+const G  = id => document.getElementById(id);
+const tx = k  => (TX[lang]&&TX[lang][k]) ? TX[lang][k] : (TX.en[k]||k);
+const nQ = () => bank.length;
+const qT = i  => bank[i][lang] || bank[i].en || "";
 
-// ─────────────────────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────────────────────
-const t   = k  => TX[lang][k] ?? TX.en[k] ?? k;
-const el  = id => document.getElementById(id);
-const nQ  = () => bank.length;
-const qT  = i  => bank[i][lang] || bank[i].en || "";
-
-function toast(msg, ms=4200){
-  const e=el("toast"); e.textContent=msg; e.classList.add("show");
-  setTimeout(()=>e.classList.remove("show"), ms);
+function showToast(msg){
+  const e=G("toast");e.textContent=msg;e.classList.add("show");
+  setTimeout(()=>e.classList.remove("show"),4000);
 }
 
-function hideLoader(){
-  const l=el("loader");
-  l.classList.add("gone");
-  setTimeout(()=>l.style.display="none", 450);
-}
-
-// ─────────────────────────────────────────────────────────────
-//  FETCH QUESTIONS FROM SHEETS
-//  Uses a JSONP-style approach via a <script> tag to avoid CORS,
-//  with a 6-second timeout that falls back to FALLBACK quietly.
-// ─────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-//  FETCH via JSONP  — bypasses CORS entirely for GET requests.
-//  We inject a <script> tag pointing at the Apps Script URL
-//  with a callback parameter. Apps Script returns
-//  callback({questions:[...]}) which the browser executes.
-//  Falls back to built-in questions after 8 seconds.
-// ─────────────────────────────────────────────────────────────
-function loadQuestions(){
-  return new Promise(resolve=>{
-    if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
-      resolve(); return;
-    }
-
-    let done = false;
-    const cbName = "__sheetsCB_" + Date.now();
-
-    const finish = (questions)=>{
-      if(done) return;
-      done = true;
-      if(questions && questions.length) bank = questions;
-      // clean up
-      delete window[cbName];
-      const s = document.getElementById(cbName);
-      if(s) s.remove();
-      resolve();
-    };
-
-    // Timeout fallback
-    const timer = setTimeout(()=>{
-      console.warn("Sheets timeout — using built-in questions.");
-      finish(null);
-    }, 8000);
-
-    // JSONP callback — Apps Script will call this
-    window[cbName] = (data)=>{
-      clearTimeout(timer);
-      finish(data && data.questions ? data.questions : null);
-    };
-
-    // Inject script tag
-    const script = document.createElement("script");
-    script.id  = cbName;
-    script.src = APPS_SCRIPT_URL + "?action=getQuestions&callback=" + cbName;
-    script.onerror = ()=>{ clearTimeout(timer); console.warn("JSONP script error — using built-in questions."); finish(null); };
-    document.head.appendChild(script);
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-//  SUBMIT  (no-cors POST — avoids preflight, fire-and-forget)
-// ─────────────────────────────────────────────────────────────
-function submitData(){
-  return new Promise(resolve=>{
-    if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
-      console.log("Demo — answers:", ans); resolve(); return;
-    }
-    const payload = JSON.stringify({
-      action:"submitAnswers",
-      timestamp: new Date().toISOString(),
-      language: lang,
-      email:    el("inp-email").value.trim(),
-      company:  el("inp-co").value.trim(),
-      answers:  bank.map((q,i)=>({question:q[lang]||q.en, answer:ans[i]||""}))
+// ══════════════════════════════════════════════════════════════
+//  BUILD LANGUAGE SWITCHER  (from ACTIVE_LANGS)
+// ══════════════════════════════════════════════════════════════
+function buildLangSwitcher(){
+  const sw=G("lsw");
+  // Hide switcher entirely if only one language
+  if(ACTIVE_LANGS.length<=1){ sw.style.display="none"; return; }
+  ACTIVE_LANGS.forEach((l,i)=>{
+    const b=document.createElement("button");
+    b.className="lb"+(i===0?" on":"");
+    b.textContent=l.label;
+    b.dataset.l=l.code;
+    b.addEventListener("click",()=>{
+      lang=l.code;
+      document.querySelectorAll(".lb").forEach(x=>x.classList.toggle("on",x===b));
+      render();
     });
-    // no-cors: request goes through, we just can't read the response
-    fetch(APPS_SCRIPT_URL, {method:"POST", mode:"no-cors",
-      headers:{"Content-Type":"text/plain"}, body:payload})
-      .finally(()=>resolve());
-    // Also resolve after 5s max so UI never hangs
-    setTimeout(resolve, 5000);
+    sw.appendChild(b);
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-//  BUILD QUESTION SCREENS  (called once after bank is ready)
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  BUILD QUESTION SCREENS
+// ══════════════════════════════════════════════════════════════
 function buildScreens(){
-  ans = Array(nQ()).fill("");
-  // Remove any old question screens
   document.querySelectorAll(".qs").forEach(e=>e.remove());
-  const app     = el("app");
-  const contact = el("s-contact");
-
-  bank.forEach((q,i)=>{
-    const d=document.createElement("div");
-    d.className="screen qs"; d.id=`s-q${i}`;
-    d.innerHTML=`
-      <div class="qi">
-        <div class="ql" id="ql-${i}"></div>
-        <h2 id="qh-${i}"></h2>
-        <div class="taw">
-          <textarea id="ta-${i}" rows="5" maxlength="2000"></textarea>
-          <span class="cc" id="cc-${i}">0 / 2000</span>
-        </div>
-        <p class="hint" id="hi-${i}"></p>
-        <div class="row">
-          <button class="btn-bk" onclick="goBack(${i})">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="bk-${i}"></span>
-          </button>
-          <button class="btn-t" id="nx-${i}" onclick="goNext(${i})">
-            <span class="sp"></span>
-            <span class="bl" id="nx-lbl-${i}"></span>
-          </button>
-        </div>
-      </div>`;
-    app.insertBefore(d, contact);
-
-    const ta=el(`ta-${i}`), cc=el(`cc-${i}`);
-    ta.addEventListener("input",()=>{ ans[i]=ta.value; cc.textContent=`${ta.value.length} / 2000`; });
-    ta.addEventListener("keydown",e=>{ if(e.key==="Tab"){e.preventDefault();goNext(i);} });
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-//  RENDER TEXT  (call after buildScreens and on every lang switch)
-// ─────────────────────────────────────────────────────────────
-function render(){
-  // Welcome
-  el("el-badge").textContent = t("badge");
-  el("el-h1").innerHTML      = t("h1");
-  el("el-p").textContent     = t("p");
-  el("el-start").textContent = t("start");
-  el("el-m1").textContent    = t("m1");
-  el("el-m2").textContent    = t("m2");
-
-  // Contact
-  el("el-cth").textContent   = t("cth");
-  el("el-cts").textContent   = t("cts");
-  el("el-lbe").textContent   = t("lbe");
-  el("inp-email").placeholder= t("phe");
-  el("el-lbc").textContent   = t("lbc");
-  el("inp-co").placeholder   = t("phc");
-  el("el-sub").textContent   = t("sub");
-  el("el-bk2").textContent   = t("back");
-
-  // Victory
-  el("el-vh").innerHTML      = t("vh");
-  el("el-vp").innerHTML      = t("vp");
-  el("el-re").textContent    = t("re");
-
-  // Loader
-  el("lmsg").textContent     = t("load");
-
-  // Question screens
+  ans=Array(nQ()).fill("");
+  const app=G("app"),contact=G("s-contact");
   bank.forEach((_,i)=>{
-    const ql=el(`ql-${i}`); if(ql) ql.textContent = t("prog")(i+1, nQ());
-    const qh=el(`qh-${i}`); if(qh) qh.textContent = qT(i);
-    const ta=el(`ta-${i}`); if(ta) ta.placeholder  = t("ph");
-    const hi=el(`hi-${i}`); if(hi) hi.innerHTML    = t("hint");
-    const nx=el(`nx-lbl-${i}`); if(nx) nx.textContent = i<nQ()-1 ? t("next") : t("last");
-    const bk=el(`bk-${i}`);     if(bk) bk.textContent = t("back");
+    const d=document.createElement("div");
+    d.className="screen qs";d.id=`s-q${i}`;
+    d.innerHTML=`<div class="qi">
+      <div class="ql" id="ql-${i}"></div>
+      <h2 id="qh-${i}"></h2>
+      <div class="taw">
+        <textarea id="ta-${i}" rows="5" maxlength="2000"></textarea>
+        <span class="cc" id="cc-${i}">0 / 2000</span>
+      </div>
+      <p class="hint" id="hi-${i}"></p>
+      <div class="row">
+        <button class="btn-bk" onclick="goBack(${i})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <span id="bk-${i}"></span>
+        </button>
+        <button class="btn-t" id="nx-${i}" onclick="goNext(${i})">
+          <span class="sp"></span><span class="bl" id="nx-lbl-${i}"></span>
+        </button>
+      </div>
+    </div>`;
+    app.insertBefore(d,contact);
+    const ta=G(`ta-${i}`),cc=G(`cc-${i}`);
+    ta.addEventListener("input",()=>{ans[i]=ta.value;cc.textContent=ta.value.length+" / 2000";});
+    ta.addEventListener("keydown",e=>{if(e.key==="Tab"){e.preventDefault();goNext(i);}});
   });
-
-  updateProgressLabel();
 }
 
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  RENDER ALL TEXT  (on init + every language switch)
+// ══════════════════════════════════════════════════════════════
+function render(){
+  G("el-badge").textContent=tx("badge");
+  G("el-h1").innerHTML=tx("h1");
+  G("el-p").textContent=tx("p");
+  G("el-start").textContent=tx("start");
+  G("el-m1").textContent=tx("m1");
+  G("el-m2").textContent=tx("m2");
+  G("el-cth").textContent=tx("cth");
+  G("el-cts").textContent=tx("cts");
+  G("el-lbe").textContent=tx("lbe");
+  G("inp-email").placeholder=tx("phe");
+  G("el-lbc").textContent=tx("lbc");
+  G("inp-co").placeholder=tx("phc");
+  G("el-sub").textContent=tx("sub");
+  G("el-bk2").textContent=tx("back");
+  G("el-vh").innerHTML=tx("vh");
+  G("el-vp").innerHTML=tx("vp");
+  G("el-re").textContent=tx("re");
+  bank.forEach((_,i)=>{
+    const ql=G(`ql-${i}`);if(ql)ql.textContent=tx("prog")(i+1,nQ());
+    const qh=G(`qh-${i}`);if(qh)qh.textContent=qT(i);
+    const ta=G(`ta-${i}`);if(ta)ta.placeholder=tx("ph");
+    const hi=G(`hi-${i}`);if(hi)hi.innerHTML=tx("hint");
+    const nx=G(`nx-lbl-${i}`);if(nx)nx.textContent=tx("next");
+    const bk=G(`bk-${i}`);if(bk)bk.textContent=tx("back");
+  });
+  updateProg();
+}
+
+// ══════════════════════════════════════════════════════════════
 //  NAVIGATION
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
 function go(id){
   const old=document.querySelector(".screen.active");
-  if(old){ old.classList.remove("active"); old.classList.add("exit");
-    setTimeout(()=>old.classList.remove("exit"),600); }
-  setTimeout(()=>{ const n=el(id); if(n) n.classList.add("active"); },80);
+  if(old){old.classList.remove("active");old.classList.add("exit");
+    setTimeout(()=>old.classList.remove("exit"),600);}
+  setTimeout(()=>{const n=G(id);if(n)n.classList.add("active");},80);
+}
+function showProg(on){
+  G("pw").classList.toggle("show",on);
+  G("pl").classList.toggle("show",on);
+}
+function updateProg(){
+  if(cur<0||cur>=nQ())return;
+  G("pb").style.width=((cur+1)/nQ()*100)+"%";
+  G("pl").textContent=tx("prog")(cur+1,nQ());
 }
 
-function showProgress(on){
-  el("pw").classList.toggle("show",on);
-  el("pl").classList.toggle("show",on);
-}
-
-function updateProgressLabel(){
-  if(cur>=0 && cur<nQ()){
-    el("pb").style.width=((cur+1)/nQ()*100)+"%";
-    el("pl").textContent=t("prog")(cur+1,nQ());
-  }
-}
-
-// Start button
-el("btn-start").addEventListener("click",()=>{
-  cur=0; go("s-q0"); showProgress(true); updateProgressLabel();
-  setTimeout(()=>el("ta-0")?.focus(),420);
+G("btn-start").addEventListener("click",()=>{
+  cur=0;go("s-q0");showProg(true);updateProg();
+  setTimeout(()=>G("ta-0")&&G("ta-0").focus(),420);
 });
 
 function goBack(i){
-  if(i===0){ cur=-1; go("s-welcome"); showProgress(false); }
-  else { cur=i-1; go(`s-q${cur}`); updateProgressLabel();
-    setTimeout(()=>el(`ta-${cur}`)?.focus(),420); }
+  if(i===0){cur=-1;go("s-welcome");showProg(false);}
+  else{cur=i-1;go(`s-q${cur}`);updateProg();
+    setTimeout(()=>G(`ta-${cur}`)&&G(`ta-${cur}`).focus(),420);}
 }
-
 function goNext(i){
-  if(i<nQ()-1){
-    cur=i+1; go(`s-q${cur}`); updateProgressLabel();
-    setTimeout(()=>el(`ta-${cur}`)?.focus(),420);
-  } else {
-    cur=nQ(); go("s-contact"); showProgress(false);
-    setTimeout(()=>el("inp-email")?.focus(),420);
-  }
+  if(i<nQ()-1){cur=i+1;go(`s-q${cur}`);updateProg();
+    setTimeout(()=>G(`ta-${cur}`)&&G(`ta-${cur}`).focus(),420);}
+  else{cur=nQ();go("s-contact");showProg(false);
+    setTimeout(()=>G("inp-email")&&G("inp-email").focus(),420);}
 }
 
-el("btn-ctbk").addEventListener("click",()=>{
-  cur=nQ()-1; go(`s-q${cur}`); showProgress(true); updateProgressLabel();
+G("btn-ctbk").addEventListener("click",()=>{
+  cur=nQ()-1;go(`s-q${cur}`);showProg(true);updateProg();
 });
 
-// Submit
-el("btn-sub").addEventListener("click", async()=>{
-  const em=el("inp-email");
-  em.classList.remove("err");
-  if(!em.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){
-    em.classList.add("err"); toast(t("errem")); em.focus(); return;
+// ══════════════════════════════════════════════════════════════
+//  SUBMIT  (no-cors POST — works without CORS headers)
+// ══════════════════════════════════════════════════════════════
+G("btn-sub").addEventListener("click",async()=>{
+  const em=G("inp-email");em.classList.remove("err");
+  if(!em.value.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value)){
+    em.classList.add("err");showToast(tx("errem"));em.focus();return;
   }
-  const btn=el("btn-sub"); btn.classList.add("busy");
-  try{ await submitData(); }
-  catch(e){ toast(t("errsub")); btn.classList.remove("busy"); return; }
+  const btn=G("btn-sub");btn.classList.add("busy");
+  try{
+    if(APPS_SCRIPT_URL&&APPS_SCRIPT_URL!=="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"){
+      const payload=JSON.stringify({
+        action:"submitAnswers",
+        timestamp:new Date().toISOString(),
+        language:lang,
+        email:em.value.trim(),
+        company:G("inp-co").value.trim(),
+        answers:bank.map((q,i)=>({question:q[lang]||q.en,answer:ans[i]||""}))
+      });
+      fetch(APPS_SCRIPT_URL,{method:"POST",mode:"no-cors",
+        headers:{"Content-Type":"text/plain"},body:payload});
+      await new Promise(r=>setTimeout(r,800)); // brief pause, fire-and-forget
+    }
+  }catch(e){/* non-fatal */}
   btn.classList.remove("busy");
-  showProgress(false); go("s-victory"); launchConfetti();
+  showProg(false);go("s-victory");launchConfetti();
 });
 
-// Language switch
-document.querySelectorAll(".lb").forEach(b=>{
-  b.addEventListener("click",()=>{
-    lang=b.dataset.l;
-    document.querySelectorAll(".lb").forEach(x=>x.classList.toggle("on",x===b));
-    render();
-  });
-});
-
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
 //  CONFETTI
-// ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
 function launchConfetti(){
-  const cv=el("cv"),cx=cv.getContext("2d");
-  cv.width=innerWidth; cv.height=innerHeight;
+  const cv=G("cv"),cx=cv.getContext("2d");
+  cv.width=innerWidth;cv.height=innerHeight;
   const cols=["#F5C842","#3ECFCF","#ff9f43","#fff","#a78bfa","#fb7185","#34d399"];
   const ps=Array.from({length:170},()=>({
-    x:Math.random()*cv.width, y:-20-Math.random()*220,
-    r:3.5+Math.random()*6, d:1.4+Math.random()*2.8,
-    c:cols[~~(Math.random()*cols.length)],
-    ts:.08+Math.random()*.28, a:0, sq:Math.random()>.45
+    x:Math.random()*cv.width,y:-20-Math.random()*220,
+    r:3.5+Math.random()*6,d:1.4+Math.random()*2.8,
+    c:cols[~~(Math.random()*cols.length)],ts:.08+Math.random()*.28,a:0,sq:Math.random()>.45
   }));
   let f=0;
   (function draw(){
     cx.clearRect(0,0,cv.width,cv.height);
     ps.forEach(p=>{
-      cx.save(); cx.fillStyle=p.c; cx.globalAlpha=Math.max(0,1-f/215);
-      cx.translate(p.x,p.y); cx.rotate(p.a*Math.PI/180);
+      cx.save();cx.fillStyle=p.c;cx.globalAlpha=Math.max(0,1-f/215);
+      cx.translate(p.x,p.y);cx.rotate(p.a*Math.PI/180);
       p.sq?cx.fillRect(-p.r/2,-p.r/2,p.r*2,p.r):(cx.beginPath(),cx.arc(0,0,p.r/2,0,2*Math.PI),cx.fill());
       cx.restore();
-      p.y+=p.d; p.x+=Math.sin(p.a*.018)*1.3; p.a+=p.ts;
+      p.y+=p.d;p.x+=Math.sin(p.a*.018)*1.3;p.a+=p.ts;
       if(p.y>cv.height){p.y=-20;p.x=Math.random()*cv.width;}
     });
-    if(++f<235) requestAnimationFrame(draw);
+    if(++f<235)requestAnimationFrame(draw);
     else cx.clearRect(0,0,cv.width,cv.height);
   })();
 }
 
-// ─────────────────────────────────────────────────────────────
-//  INIT  — always hides loader even if everything fails
-// ─────────────────────────────────────────────────────────────
-(async()=>{
-  try {
-    await loadQuestions();
-    buildScreens();
-    render();
-  } catch(e){
-    console.error("Init error:", e);
-    bank = FALLBACK.map(q=>({...q}));
-    try { buildScreens(); render(); } catch(e2){ console.error(e2); }
-  } finally {
-    hideLoader();
-  }
-  // Start live-sync after initial load
-  startLiveSync();
-})();
-
-// ─────────────────────────────────────────────────────────────
-//  LIVE SYNC  — polls Sheets every 30s, rebuilds silently
-//  Only updates when user is on the welcome screen so a live
-//  respondent is never interrupted mid-survey.
-// ─────────────────────────────────────────────────────────────
-function startLiveSync(){
-  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
-
-  const INTERVAL = 30000; // 30 seconds
-
-  async function poll(){
-    // Don't disturb someone who has already started the survey
-    if(cur !== -1) return;
-
-    const prevJSON = JSON.stringify(bank);
-    await loadQuestions();
-    const newJSON  = JSON.stringify(bank);
-
-    if(newJSON !== prevJSON){
-      // Questions changed — rebuild screens silently
-      console.log("Sheets updated — refreshing questions.");
-      ans = Array(nQ()).fill("");
-      buildScreens();
-      render();
-      // Flash a subtle indicator in the progress label area so
-      // the developer/admin can see the sync happened
-      const indicator = document.createElement("div");
-      indicator.style.cssText = [
-        "position:fixed","bottom:20px","right:20px","z-index:600",
-        "background:rgba(62,207,207,.18)","border:1px solid var(--teal)",
-        "color:var(--teal)","font-size:11px","font-weight:700",
-        "padding:6px 14px","border-radius:100px","letter-spacing:.06em",
-        "text-transform:uppercase","opacity:1","transition:opacity 1s",
-        "pointer-events:none"
-      ].join(";");
-      indicator.textContent = "✓ Questions updated";
-      document.body.appendChild(indicator);
-      setTimeout(()=>indicator.style.opacity="0", 2500);
-      setTimeout(()=>indicator.remove(), 3600);
-    }
-  }
-
-  // Poll on page visibility change too (user switches back to tab)
-  document.addEventListener("visibilitychange",()=>{
-    if(!document.hidden) poll();
-  });
-
-  setInterval(poll, INTERVAL);
-}
+// ══════════════════════════════════════════════════════════════
+//  INIT  (synchronous — no fetch, no waiting)
+// ══════════════════════════════════════════════════════════════
+buildLangSwitcher();
+buildScreens();
+render();
 </script>
 
 <!--
 ╔══════════════════════════════════════════════════════════════════╗
-║            GOOGLE APPS SCRIPT  (full updated version)           ║
-╚══════════════════════════════════════════════════════════════════╝
+║  GOOGLE APPS SCRIPT  — paste this in Extensions → Apps Script   ║
+║  Deploy as Web App: Execute as Me, Who has access: Anyone       ║
+╠══════════════════════════════════════════════════════════════════╣
 
-Paste this in Extensions → Apps Script, replace SS_ID, then:
-  Deploy → Manage deployments → ✏️ → Version: New version → Deploy
-
-──────────────────────────────────────────────────────────────────
-// ── REPLACE YOUR_SPREADSHEET_ID_HERE with your real Spreadsheet ID ──
 const SS_ID = "YOUR_SPREADSHEET_ID_HERE";
 
-// doGet handles both regular fetch AND JSONP (callback= param)
-function doGet(e) {
-  var questions = [];
-  var sheet = SpreadsheetApp.openById(SS_ID).getSheetByName("Questions");
-  var rows  = sheet.getDataRange().getValues();
-  rows.shift(); // skip header row
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i];
-    if (r[0] || r[1] || r[2] || r[3]) {
-      questions.push({ en: r[0]||"", it: r[1]||"", es: r[2]||"", de: r[3]||"" });
-    }
-  }
-
-  var json = JSON.stringify({ questions: questions });
-
-  // JSONP support — if ?callback=xxx is present, wrap in callback(...)
-  var cb = (e && e.parameter && e.parameter.callback) ? e.parameter.callback : null;
-  if (cb) {
-    // Validate callback name (letters, digits, underscores only — security)
-    cb = cb.replace(/[^a-zA-Z0-9_]/g, "");
-    json = cb + "(" + json + ")";
-  }
-
-  return ContentService.createTextOutput(json)
-    .setMimeType(cb ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
-}
-
 function doPost(e) {
-  var body = JSON.parse(e.postData.contents);
-  var ss   = SpreadsheetApp.openById(SS_ID);
-  var resp = ss.getSheetByName("Responses");
-  if (!resp) {
-    resp = ss.insertSheet("Responses");
-    resp.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
+  var b  = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var s  = ss.getSheetByName("Responses");
+  if (!s) {
+    s = ss.insertSheet("Responses");
+    s.appendRow(["Timestamp","Language","Email","Company","Question","Answer"]);
   }
-  if (body.action === "submitAnswers") {
-    for (var i = 0; i < body.answers.length; i++) {
-      var a = body.answers[i];
-      resp.appendRow([body.timestamp, body.language, body.email, body.company, a.question, a.answer]);
-    }
+  if (b.action === "submitAnswers") {
+    b.answers.forEach(function(a) {
+      s.appendRow([b.timestamp, b.language, b.email, b.company, a.question, a.answer]);
+    });
   }
-  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput("ok");
 }
 
-╔══════════════════════════════════════════════════════════════╗
-║  SHEETS "Questions" tab layout                               ║
-╠══════════════════════════════════════════════════════════════╣
-║  A1: Question_EN  B1: Question_IT  C1: Question_ES  D1: Question_DE
-║  A2…: one question per row in each language                  ║
-║  Add/remove rows freely — page adapts automatically          ║
-╚══════════════════════════════════════════════════════════════╝
+function doGet() {
+  return ContentService.createTextOutput("ok");
+}
+
+╚══════════════════════════════════════════════════════════════════╝
 -->
 </body>
 </html>
